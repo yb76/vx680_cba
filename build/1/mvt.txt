@@ -1,0 +1,118 @@
+Version   "23/05/13"
+target    390
+header    <MVT.hdr>
+#include <..\include\emvsizes.h>
+#include <..\include\gdMVT.h>
+
+data MVT
+{
+( -1,                  /* SchemeReference */
+  -1,                  /* IssuerReference */
+   1,                  /* TRMDataPresent  */
+   0,                  /* EMVFloorLimit   */
+   0,                  /* EMVRSThreshold  */
+   0,                  /* EMVTargetRSPercent */
+   0,                  /* EMVMaxTargetRSPercent */
+   1,                  /* MerchantForcedOnline  */
+   0,                  /* BlackListedCardSpprt  */
+  "0000000000",        /* "TAC Default"         */
+  "0000000000",        /* "TAC Denial"       */
+  "0000000000",        /* "TAC Online"       */
+  "0000",              /* "Default TDOL"    */
+  "0000",              /* "Default DDOL"     */
+  0,                   /* "FallbackAllowed " */
+ -1,                   /* NextRecord */
+  0,                   /* EMVCounter */
+  0,                   /* App Selection Flag */
+  "0036",              /* EMVTermCountryCode */
+  "0036",              /* EMVTermCurrencyCode */
+  2,                   /* Terminal Currency Exponent 5F36 */
+  "E0F0C8",            /* EMVTermCapabilities */
+  "FF80F0A001",        /* EMVTermAddCapabilities */
+  "22",                /* EMVTermType */
+  "2701",              /* "EMV Merchant Category Code"    */
+  "R",                 /* "EMV Terminal Category Code"  */
+  0,                   /*  Flag to allow the application to modify the candidate list. 0 = Not allowed,1= Allowed*/
+  0,                   /*  "SHORT RFU1"    */
+  0,                   /*  "SHORT RFU2"    */
+  0,                   /*  "SHORT RFU3"    */
+  "",                  /*  "STRING RFU1"   */
+  "",                  /*   "STRING RFU2"  */
+  "",                  /*   "STRING RFU3"  */
+)
+
+/* Record 1 - Visa Scheme */
+(
+ -1,                   /* "Scheme Reference" */
+ -1,                   /* "Issuer Reference" */
+  1,                   /* "TRM Data Present" */
+  0,                   /* "Floor Limit"      */
+  0,                   /* "RS Threshold"     */
+  1,                   /* "Target RS %"      */
+  1,                   /* "Max Target RS %"  */
+  0,                   /* MerchantForcedOnline */
+  0,                   /* BlackListedCardSpprt */
+  "DC4000A800",        /* "TAC Default"      */
+  "0010000000",        /* "TAC Denial"       */
+  "DC4004F800",        /* "TAC Online"       */
+  "9F02065F2A029A0390", /* "Default TDOL"     */
+  "9F3704",            /* "Default DDOL"     */
+  1,                   /* "FallbackAllowed " */
+  -1,                  /* NextRecord */
+  0,                   /* EMVCounter */
+  0,                   /* Automatic Application Selection */
+  "0036",              /* "EMV Country Code"              */
+  "0036",              /* "EMV Currency Code"             */
+  2,                   /* Terminal Currency Exponent 5F36 */
+  "E0F0C8",            /* "EMV Terminal Capabilities"     */
+  "FF80F0A001",        /* "EMV Add Terminal Capabilities" */
+  "22",                /* "EMV Terminal Type"             */
+  "2701",              /* "EMV Merchant Category Code"    */
+  "R",                 /* "EMV Terminal Category Code"    */
+  0,                   /*  Flag to allow the application to modify the candidate list. 0 = Not allowed,1= Allowed*/
+  0,                   /*  "SHORT RFU1    */
+  0,                   /*  "SHORT RFU2    */
+  0,                   /*  "SHORT RFU3    */
+  "",                  /*   "STRING RFU1  */
+  "",                  /*   "STRING RFU2  */
+  "",                  /*   "STRING RFU3  */
+)
+
+/* Record 2 - Master Card Scheme */
+(
+ -1,                   /* "Scheme Reference" */
+ -1,                   /* "Issuer Reference" */
+  1,                   /* "TRM Data Present" */
+  125,                   /* "Floor Limit"      */
+  0,                   /* "RS Threshold"     */
+  1,                   /* "Target RS %"      */
+  1,                   /* "Max Target RS %"  */
+  0,                   /* MerchantForcedOnline */
+  0,                   /* BlackListedCardSpprt */
+  "FC50BCA000",        /* "TAC Default"      */
+  "0000000000",        /* "TAC Denial"       */
+  "FC50BCF800",        /* "TAC Online"       */
+  "9F02065F2A029A0390",        /* "Default TDOL"      */
+  "9F3704",            /* "Default DDOL"     */
+  1,                   /* "FallbackAllowed " */
+  -1,                  /* NextRecord */
+  0,                   /* EMVCounter */
+  0,                   /* Automatic Application Selection */
+  "0036",              /* "EMV Country Code"              */
+  "0036",              /* "EMV Currency Code"             */
+  2,                   /* Terminal Currency Exponent 5F36 */
+  "E0F0C8",            /* "EMV Terminal Capabilities"     */
+  "FF80F0A001",        /* "EMV Add Terminal Capabilities" */
+  "22",                /* "EMV Terminal Type"             */
+  "2701",              /* "EMV Merchant Category Code"    */
+  "R",                 /*  "EMV Terminal Category Code"   */
+   0,                  /*   Flag to allow the application to modify the candidate list. 0 = Not allowed,1= Allowed*/
+   0,                  /*   "SHORT RFU1    */
+   0,                  /*   "SHORT RFU2    */
+   0,                  /*   "SHORT RFU3    */
+   "",                 /*  "STRING RFU1    */
+   "",                 /*  "STRING RFU2    */
+   "",                 /*  "STRING RFU3    */
+)
+
+}
