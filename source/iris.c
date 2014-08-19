@@ -295,7 +295,7 @@ bool remoteTms()
 	short maxTry = 1;
 	char *objdata=NULL;
 	unsigned int objlength=0;
-	static char key_master[10]="111";
+	static char key_master[10]="4";
 	static char key_kek[10]="6";
 	static char key_mkr[10]="103";
 	static char key_mks[10]="101";
@@ -682,7 +682,7 @@ bool remoteTms()
 //-----------------------------------------------------------------------------
 //
 
-char * IRIS_GetObjectData_all(const char * objectName, unsigned int * length, bool jsonfile)
+char * IRIS_GetObjectData_all(const char * objectName, unsigned int * length, int jsonfile)
 {
 	char temp = 0;
 	char * data;

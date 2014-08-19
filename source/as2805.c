@@ -70,6 +70,9 @@ static int leftOverValue = 0;
 
 static bool bcdLength = true; // false;
 
+static uint maxField = 53;
+static uint addField = 0;
+
 static const T_FIELD_FORMAT fieldType[] =
 {
 	{	C_BCD,		4},		// 0, Message ID
@@ -510,6 +513,8 @@ void AS2805BufferPack(char * data, uchar format, uint size, uchar * buffer, uint
 	time_t_ris sometime;	//KK changed
 	struct tm myTime;
 
+	if(format == C_LLVAR) format = bcdLength ? C_LLNVAR: C_LLAVAR;
+
 	switch (format)
 	{
 		case C_BCD:
@@ -582,8 +587,7 @@ void AS2805BufferPack(char * data, uchar format, uint size, uchar * buffer, uint
 			break;
 		case C_LLAVAR:
 			sprintf((char *) &buffer[*index], "%02d%s", strlen(data), data);
-			*index += 2;
-			*index += strlen(data) ;
+			*index += strlen(data) + 2;
 			break;
 		case C_LLLVAR:
 			if (bcdLength)
@@ -654,6 +658,8 @@ void AS2805BufferUnpack(char * data, uchar format, uint size, uchar * buffer, ui
 
 	memset(&myTime, 0, sizeof(myTime));
 
+	if(format == C_LLVAR) format = bcdLength ? C_LLNVAR: C_LLAVAR;
+
 	switch (format)
 	{
 		case C_BCD:
@@ -700,20 +706,9 @@ void AS2805BufferUnpack(char * data, uchar format, uint size, uchar * buffer, ui
 			data[size] = '\0';
 			break;
 		case C_LLNVAR:
-			length = 2;
-			size = _bcdToNumber(buffer, index, length, C_BCD);
-			for (i = 0; i < size; i++)
-			{
-				if (i & 0x01)
-					data[i] = (buffer[(*index)++] & 0x0f) + 0x30;
-				else
-					data[i] = (buffer[(*index)] >> 4) + 0x30;
-			}
-			if (size & 0x01) (*index)++;
-			data[i] = '\0';
-			break;
 		case C_LLLNVAR:
-			length = 3;
+			if (format == C_LLNVAR) length = 2;
+			if (format == C_LLLNVAR) length = 3;
 			size = _bcdToNumber(buffer, index, length, C_BCD);
 			for (i = 0; i < size; i++)
 			{
@@ -789,26 +784,22 @@ void AS2805Unpack(uchar field, char * data, uchar * buffer, uint length)
 			uchar format = fieldType[currentField].format;
 			int size = fieldType[currentField].size;
 
+			if(format == C_LLVAR) format = bcdLength ? C_LLNVAR: C_LLAVAR;
+
 			if (field != currentField)
 			{
 				switch (format)
 				{
 					case C_LLNVAR:
+					case C_LLLNVAR:
 						{
-						int len = _bcdToNumber(buffer, &fieldsIndex, 2, format);
-						if (len & 0x01) len = len / 2 + 1; else len /= 2;
-						fieldsIndex = fieldsIndex + len ;
+							int len = _bcdToNumber(buffer, &fieldsIndex, (format == C_LLNVAR)?2:3, format);
+							//if (len & 0x01) len = len / 2 + 1; else len /= 2;
+							fieldsIndex = fieldsIndex + len ;
 						}
 						break;
 					case C_LLAVAR:
 						fieldsIndex += (buffer[fieldsIndex] - '0') * 10 + buffer[fieldsIndex+1] - '0' + 2;
-						break;
-					case C_LLLNVAR:
-						{
-							int len = _bcdToNumber(buffer, &fieldsIndex, (format == C_LLNVAR)?2:3, format);
-							if (len & 0x01) len = len / 2 + 1; else len /= 2;
-							fieldsIndex = fieldsIndex + len ;
-						}
 						break;
 					case C_LLLVAR:
 						if (bcdLength) {
@@ -844,4 +835,139 @@ void AS2805Unpack(uchar field, char * data, uchar * buffer, uint length)
 			}
 		}
 	}
+}
+
+/*
+**-------------------------------------------------------------------------------------------
+** FUNCTION   : AS2805OFBAdjust
+**
+** DESCRIPTION:	Transfers the clear fields, as specified in AS2805.9, from a source stream
+**				to a destination stream to complete message encryption / decryption.
+**
+**				The fields transferred, if available, according to the primary bitmap are:
+**				- Field 0 - Message ID.
+**				- Primary bitmap.
+**				- Field 39	- Response Code
+**				- Field 41	- Terminal ID
+**				- Field 42	- Merchant ID
+**				- Field 53 - Security Related Control Information
+**				- The length portion of any variable length field of it exists up to field 53.
+**				  This includes fields 2,32-36, 44-48 as defined in the above table
+**
+**				
+** PARAMETERS:	source		<=	Source AS2805 stream where clear data are stored.
+**				dest		=>	Destination AS2805 stream - Must be a replica of source stream
+**								In terms of field existence and size. The data in the other
+**								fields are left untouched.
+**				length		<=	Length of the buffer
+**
+** RETURNS:		None
+**
+**-------------------------------------------------------------------------------------------
+*/
+void AS2805OFBAdjust(uchar * source, uchar * dest, uint length)
+{
+	uchar bitMap = 0x80;
+	uint index = 2;
+	uchar currentField = 1;
+	const uchar field[] = {39, 41, 42, 53};
+	int i = 0;
+
+	// Transfer field 0 = Message ID and primary bitmap
+	memcpy(dest, source, 10);
+
+	for (fieldsIndex = 10; currentField <= maxField && fieldsIndex < length; currentField++, bitMap >>= 1)
+	{
+		if (bitMap == 0)
+		{
+			bitMap = 0x80;
+			index++;
+		}
+
+		if (source[index] & bitMap)
+		{
+			uchar format = fieldType[currentField].format;
+			int size = fieldType[currentField].size;
+
+			if(format == C_LLVAR) format = bcdLength ? C_LLNVAR: C_LLAVAR;
+
+			if (currentField != field[i] && currentField != addField)
+			{
+				switch (format)
+				{
+					case C_LLNVAR:
+					case C_LLLNVAR:
+						memcpy(&dest[fieldsIndex], &source[fieldsIndex], (format == C_LLNVAR)?1:2);
+						{
+							int len = _bcdToNumber(source, &fieldsIndex, (format == C_LLNVAR)?2:3, format);
+							if (len & 0x01) len = len / 2 + 1;
+							else len /= 2;
+							fieldsIndex += len;
+						}
+						break;
+					case C_LLAVAR:
+						memcpy(&dest[fieldsIndex], &source[fieldsIndex], 2);
+						fieldsIndex += (source[fieldsIndex] - '0') * 10 + source[fieldsIndex+1] - '0' + 2;
+						break;
+					case C_LLLVAR:
+						if (bcdLength)
+						{
+							memcpy(&dest[fieldsIndex], &source[fieldsIndex], 2);
+							fieldsIndex += _bcdToNumber(buffer, &fieldsIndex, 3, C_BCD);
+						}
+						else
+						{
+							memcpy(&dest[fieldsIndex], &source[fieldsIndex], 3);
+							fieldsIndex += (source[fieldsIndex] - '0') * 100 + (source[fieldsIndex+1] - '0') * 10 + source[fieldsIndex+2] - '0' + 3;
+						}
+						break;
+					case C_AMOUNT:
+						fieldsIndex++;
+					case C_BCD:
+					case C_MMDDhhmmss:
+					case C_YYMMDD:
+					case C_YYMM:
+					case C_MMDD:
+					case C_hhmmss:
+						fieldsIndex += 	size / 2;
+						if (size & 0x01) fieldsIndex++;
+						break;
+					case C_BITMAP:
+						fieldsIndex += 	size / 8;
+						break;
+					default:
+						fieldsIndex += 	size;
+				}
+			}
+			else
+			{
+				memcpy(&dest[fieldsIndex], &source[fieldsIndex], format == C_STRING?size:size/2);
+				fieldsIndex += (format == C_STRING?size:size/2);
+			}
+		}
+
+		if (currentField >= field[i])
+			i++;
+	}
+}
+
+/*
+**-------------------------------------------------------------------------------------------
+** FUNCTION   : AS2805OFBVariation
+**
+** DESCRIPTION:	Allows varying the maximum field number to include during OFB encryption.
+**				It also allows to add an additional field to leave unencrypted - usually the STAN
+**				which can be used as part of the IV.
+**				
+** PARAMETERS:	my_maxField		<=	New maximum field.
+**				my_addField		<=	New additional field.
+**
+** RETURNS:		None
+**
+**-------------------------------------------------------------------------------------------
+*/
+void AS2805OFBVariation(int my_maxField, int my_addField)
+{
+	maxField = my_maxField;
+	addField = my_addField;
 }

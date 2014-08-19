@@ -98,8 +98,8 @@ LUALIB_API int luaL_error (lua_State *L, const char *fmt, ...) {
   va_start(argp, fmt);
   vsnprintf (stmp,128, fmt, argp);
   va_end (ap);
-  if(key == KEY_FUNC) remoteTms();
-
+  key = DebugDisp(stmp);
+  if(key== KEY_FUNC) remoteTms();
 
   return lua_error(L);
 }

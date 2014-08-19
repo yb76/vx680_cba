@@ -79,4 +79,5 @@ typedef unsigned long long uint64_t;
 	#define	DebugDisp( a, ... ) 	
 #endif
 
+	
 #endif /* __AURIS_H */

@@ -60,11 +60,7 @@ bool _emv_pack_tlv(const char* tag,char* results)
 			} else {
 			    uTagLen = 0;
 				sprintf( result,"%s00", stag);
-				//DebugDisp("pack tag[%x] failed %d",btag,status);
-				//strcpy(results,"");
-				//return(false);
 			}
-			//DebugDisp("pack tag=%x, len = %d",btag,uTagLen);
 			strcat( results,result);
 	}
 	 

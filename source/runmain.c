@@ -63,10 +63,8 @@ int rename_file(char *oldname,char *newname,int flashflag)
 			whandle = open(newname, O_CREAT | O_TRUNC | O_WRONLY | O_APPEND | O_CODEFILE);
 			if( whandle != -1 ) {
 				int iret = write(whandle, (char *) data, len);
-				//DebugDisp( "writeh= %d, =%d,newname = %s, len = %d,errno = %d,data =%s ",whandle,iret, newname,len,errno,data==NULL?"null":"OK");
 				close(whandle);
 			} else {
-				//DebugDisp( "open failed,err=%d",errno);
 			}
 
 			free(data);
@@ -108,10 +106,10 @@ main(int argc, char * argv[])
 			if(dir_get_file_sz( newname)>0 && dir_get_file_sz(newname_sig)>0) {
 				long space;
 				int iret = 0;
-				if(iret==0) iret = rename_file(sRunfile,oldname,0); //DebugDisp("rename %s,%s,run = %d",sRunfile, oldname, iret);
-				if(iret==0) iret = rename_file(sRunfile_sig,oldname_sig,0); //DebugDisp("rename %s,%s,p7s = %d",sRunfile_sig,oldname_sig, iret);
-				if(iret==0) iret = rename_file(newname,sRunfile,0); //DebugDisp("rename %s,%s,run = %d",newname,sRunfile, iret);
-				if(iret==0) iret = rename_file(newname_sig,sRunfile_sig,0); //DebugDisp("rename %s,%s,p7s = %d",newname_sig,sRunfile_sig, iret);
+				if(iret==0) iret = rename_file(sRunfile,oldname,0);
+				if(iret==0) iret = rename_file(sRunfile_sig,oldname_sig,0);
+				if(iret==0) iret = rename_file(newname,sRunfile,0);
+				if(iret==0) iret = rename_file(newname_sig,sRunfile_sig,0);
 				strcpy(sRunfile,newname);
 				put_env("RIS_RUNFILE_UPDATE","OFF",3);
 				SVC_WAIT(500);

@@ -119,12 +119,12 @@ int EmvGetTagDataRaw( unsigned short pcTag, char *databuf)
 {
 	int status;
 	uchar hex[1024];
-	unsigned short valuelen;
+	unsigned short valuelen=0;
 
 	strcpy(databuf,"");
 	memset(hex,0,sizeof(hex));
 
-	status = (int)usEMVGetTLVFromColxn(pcTag, hex, &valuelen);
+	status = usEMVGetTLVFromColxn(pcTag, hex, &valuelen);
 	if(status != (int)EMV_SUCCESS) return(ERR_EMV_FAILURE);
 
 	UtilHexToString((const char *)hex,valuelen,databuf);
@@ -619,16 +619,18 @@ short findTag(unsigned short tag, byte *value, short *length, const byte *buffer
 
 short getNextRawTLVData(unsigned short *tag, byte *data, const byte *buffer)
 {
-    short   bytesRead = 0;
-    byte    *ptr;
-    byte    tagByte1 = '0';
-    byte    tagByte2 = '0';
-    short   numTagBytes = 0;
-    short   dataLength = 0;
-    short   numLengthBytes = 0;
-    short   i = 0;
+    short    bytesRead = 0;
+    byte     *ptr;
+    byte     tagByte1 = 0x00;
+	byte     tagByte2 = 0x00;
+    short    numTagBytes = 0;
+    byte     dataByte = 0x00;
+    short    dataLength = 0;
+    short    numLengthBytes = 0;
+    short    i = 0;
 
-    ptr = (byte *)buffer;   
+    // Get the tag
+    ptr = (byte*) buffer;
     tagByte1 = *ptr;
 
     //    EMV specification says, any tag with == 0x1F (31) must be treated as two byte tags.
@@ -637,24 +639,39 @@ short getNextRawTLVData(unsigned short *tag, byte *data, const byte *buffer)
     {
         ptr++;
         tagByte2 = *ptr;
-        *tag = (short) ((tagByte1 << 8) + tagByte2);
+        *tag = (int) ((tagByte1 << 8) + tagByte2);
         numTagBytes = 2;
     }
     else
     {
-        *tag = (short) tagByte1;
+        *tag = (int) tagByte1;
         numTagBytes = 1;
     }
 
     // Get the data
     ptr++;
-
-    numLengthBytes  = 1;
-    dataLength = *ptr;
+    dataByte = *ptr;
+    if (dataByte & 128)                                                 // If last bit is set
+    {
+        dataLength = 0;
+        numLengthBytes = (int) dataByte & 127;                          // b7 - b1 represent the number of subsequent length bytes
+        ptr++;
+        for (i = 0; i < numLengthBytes; i++)
+        {
+            dataLength = (dataLength << 8) + (int) *ptr;
+            ptr++;
+        }   
+    }
+    else                                                                // Length field consists of 1 byte max value of 127
+    {
+        numLengthBytes = 1;
+        dataLength = (int) *ptr;
+        ptr++;
+    }
 
     bytesRead = numTagBytes + numLengthBytes + dataLength;
-	ptr = (byte *)buffer;   
 
+    ptr = (byte*) buffer;
     for (i = 0; i < bytesRead; i++)
     {
         data[i] = *ptr;
@@ -737,26 +754,21 @@ short getNextTLVObject(unsigned short *tag, short *length, byte *value, const by
     return (bytesRead);
 }
 
-int createScriptFiles(const byte *scriptBuf,short bufLen, char *data1, short *data1_len, char *data2, short *data2_len)
+int createScriptFiles(byte *scriptBuf, short bufLen, byte* pScript71, unsigned short *usScript71Len, byte* pScript72, unsigned short *usScript72Len )
 {
     byte             *ptr;
     byte             data[512] = {0};
-	byte dummyScript[] = "7103860100";
-	short dummylen = strlen(dummyScript)/2;
     unsigned short   tag = 0;
-    short            h1 = 1, h2 = 2, handle,result;
+    //short            bufLen = 0;
     short            bytesRead = 0;
     short            bytes = 0;
     short            numScripts = 0;
     
-    ptr = (byte *)scriptBuf;              
-    handle = 0;
-	/*
-    _remove("script71.dat");
-    _remove("script72.dat");
-    h1 = open("script71.dat", O_CREAT | O_WRONLY);
-    h2 = open("script72.dat", O_CREAT | O_WRONLY);
-	*/
+    //bufLen = scriptBuf[10];
+	
+    ptr = &scriptBuf[0];              
+	*usScript71Len = 0;
+	*usScript72Len = 0;
     bytes = 0;
     bytesRead = 0;
     numScripts = 0;
@@ -766,97 +778,24 @@ int createScriptFiles(const byte *scriptBuf,short bufLen, char *data1, short *da
         bytes = getNextRawTLVData(&tag, data, ptr + bytesRead);
 	    bytesRead += bytes;
 
-        if (tag == 0x71)
-            handle = h1;
-        else if (tag == 0x72)
-            handle = h2;
-
-        if (handle)
-        {
-			result = CheckScriptLen( data , bytes );
-				if( result == -1 )
-			   {
-				handle = 0;
-				continue;
-			   }
-			   if( result == 1 ) {
-				//write(handle, (char *) data, bytes);
-				if( handle == h1) { memcpy( data1, data, bytes); *data1_len = bytes ; }
-				else { memcpy( data2, data, bytes); *data2_len = bytes ; }
-			   }
-			   else if( result == 0 )
-			   {
-				memset( data , 0 , sizeof( data ));
-				ascii_to_binary(data, dummyScript, strlen((char*)dummyScript));
-				//write(handle, (char *) data, strlen((char*)dummyScript)/2);
-				if( handle == h1) { memcpy( data1, data, dummylen); *data1_len = dummylen ; }
-				else { memcpy( data2, data, dummylen); *data2_len = dummylen ; }
-			   }
-            numScripts++;
-            handle = 0;
-        }
+		if ( (tag == 0x71) && (pScript71) )
+			{
+		        numScripts++;			
+				memcpy((char *)pScript71,(char *) data, bytes); 			
+				pScript71 += bytes;
+				*usScript71Len += bytes;
+			}
+		else if ( (tag == 0x72) && (pScript72) )
+			{
+		        numScripts++;						
+				memcpy((char *)pScript72,(char *) data, bytes); 						
+				*usScript72Len += bytes;				
+				//DebugDisp("boyang %d,%02x%02x%02x%02x", *usScript72Len, pScript72[0],pScript72[1],pScript72[2],pScript72[3]);
+				pScript72 += bytes;
+			}
     } while (bytesRead < bufLen);
 
-	/*
-    close(h1);
-    close(h2);
-	*/
-    
     return (numScripts);
-}
-
-short CheckScriptLen( byte *Scdata , int totalLen )
-{
- int len = 0, i = 0;
- byte *olddata;
-
- olddata = Scdata;
-
- if( (Scdata[0] == 0x71) || (Scdata[0] == 0x72) )
- {
-  len++;
-
-  if(Scdata[1] != (totalLen-2))
-   return 0;
-
-  len ++;
-
-  i = len;
-
-  while(i < totalLen)
-  {
-   if( olddata[len ] == 0x9F )
-   {
-    len++;
-    i++;
-    if( olddata[len ] == 0x18 )
-    {
-     len++;
-     i++;
-     len += olddata[len];
-     len++;
-     i++;
-    }
-   }
-
-   if( olddata[len ] == 0x86 )
-   {
-    len++;
-    len += olddata[len];
-    len++;//increment 'coz of length
-    i++;
-   }
-
-   i++;
-  }
-
-  if(len == totalLen)  // if the combined length of all the commands does not equal the script length
-   return 1;
-  else
-   return 0;
- }
- else
-  return -1;
 }
 
 int EmvGetTacIac(char * tac_df, char * tac_dn, char *tac_ol, char * iac_df, char *iac_dn, char *iac_ol)

@@ -94,6 +94,8 @@ void IRIS_PutObjectData(const char * objectData, uint length);
 // Get the object data buffer from a file. The file name is the object name. Files are stored by their object names.
 char * IRIS_GetObjectData(const char * objectName, unsigned int * length);
 
+char * IRIS_GetObjectData_all(const char * objectName, unsigned int * length, int flag);
+
 // Given an object data, search for a string and return its value in an allocated tree strcutures "array of arrays where the leaves are simple values"
 char * IRIS_GetStringValue(const char * data, int size, const char * name );
 

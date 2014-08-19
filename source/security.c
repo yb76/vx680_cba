@@ -1085,7 +1085,7 @@ bool SecurityPINBlock(char * appName, uchar location, uchar keySize, char * pan,
 	UtilStringToHex(myPan, 16, &data[1]);
 
 	// Perform the instruction
-	if (iret = iPS_ExecuteScript( C_SCRIPT_ID, keySize == 8?M_PIN:M_PIN_3DES, sizeof(data), data, 8, &outLen, ePinBlock)) {
+	if ((iret = iPS_ExecuteScript( C_SCRIPT_ID, keySize == 8?M_PIN:M_PIN_3DES, sizeof(data), data, 8, &outLen, ePinBlock))!=0) {
 		return false;
 	}
 
@@ -1137,7 +1137,7 @@ bool SecurityPINBlockWithVariant(char * appName, uchar location, uchar keySize, 
 
 	// Perform the instruction
 #ifdef __EMV
-	if(emv) {
+	if(false) {
 		char pin[10];
 		char stmp[17];
 		int GetSetEmvPin( unsigned short action,unsigned char *pin);
@@ -1226,7 +1226,7 @@ bool SecurityPINBlockCba(uchar* location_1, uchar *location_2,char * pan, bool e
 		data[0] = (unsigned char)atoi((const char*)location_1);
 
 		SecuritySetIV(NULL);
-		if ( iret = iPS_ExecuteScript( C_SCRIPT_ID, M_ENC_3DES, 9, data, 8, &outLen, &data[1]))  ok = false;
+		if (( iret = iPS_ExecuteScript( C_SCRIPT_ID, M_ENC_3DES, 9, data, 8, &outLen, &data[1]))!=0)  ok = false;
 
 		if(ok) {
 			data[0] = (unsigned char)atoi((const char*)location_2);
@@ -1251,7 +1251,7 @@ bool SecurityPINBlockCba(uchar* location_1, uchar *location_2,char * pan, bool e
 			LOG_PRINTFF(0x00000001L,"pinblock step1 = [%02x%02x%02x%02x%02x%02x%02x%02x]",data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8]);
 			data[0] = (unsigned char)atoi((const char*)location_2);
 			SecuritySetIV(NULL);
-			if ( iret = iPS_ExecuteScript( C_SCRIPT_ID, M_ENC_3DES, 9, data, 8, &outLen, &data[1]))  ok = false;
+			if ( (iret = iPS_ExecuteScript( C_SCRIPT_ID, M_ENC_3DES, 9, data, 8, &outLen, &data[1]))!=0)  ok = false;
 			if(ok) UtilHexToString((const char *)&data[1],8,(char *)ePinBlock);
 			LOG_PRINTFF(0x00000001L,"pinblock step2 = [%02x%02x%02x%02x%02x%02x%02x%02x]",data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8]);
 		}

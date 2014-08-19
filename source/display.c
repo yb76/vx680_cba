@@ -260,8 +260,10 @@ int	DispArray(int timeout,char **pcMenuItems, int iMenuItemsTotal)
 		}
 	}
 	if(selected > 0) return(selected);
-
-	return(0);
+	else if(!strcmp(outevent,"TIME")) {
+		return( -1 * EVT_TIMEOUT);
+	} else
+		return(0);
 }
 
 #ifdef __VX670
@@ -392,11 +394,12 @@ char DebugDisp (const char *template, ...)
 	setfont("");
     write_at(stmp, strlen(stmp), 1, 0);
     while(read(STDIN, &key, 1) != 1);
-	key &= 0x7F;
+
 	if(old_mode)
 		set_display_coordinate_mode(PIXEL_MODE);
-	return key;
 
+	key &= 0x7F;
+	return(key);
 }
 
 int DebugPrint (const char*template,...) {

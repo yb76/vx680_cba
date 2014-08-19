@@ -74,13 +74,6 @@ int iphandle = -1;
 //#define DispText2(a,b,c,d,e,f)	LOG_PRINTF((a));
 #define DispText2(a,b,c,d,e,f)	;
 
-static void GPRSProgress(char * data)
-{
-	setfont("");
-	gotoxy(1, 1);
-	putpixelcol(data, 12);
-}
-
 
 /*
 **-----------------------------------------------------------------------------
@@ -459,6 +452,8 @@ uint CommsReceive( T_COMMS * psComms, bool fFirstChar)
 			SVC_WAIT(100);
 		}
 	}
+	return ERR_COMMS_NONE;
+
 }
 
 /*
@@ -531,7 +526,8 @@ uint Comms(E_COMMS_FUNC eFunc, T_COMMS * psComms)
                     header[6] = ( psComms->wLength + headerLength)% 256;
                     header[7] = 0; //checksum
                     header[8] = 0; //checksum
-                    memcpy( &header[9], "\x05\x49\x80\x00\x00\x05",6); //dest address NSAP
+                    //memcpy( &header[9], "\x05\x49\x80\x00\x00\x05",6); //dest address NSAP
+                    memcpy( &header[9], "\x05\x49\x80\x00\x00\x03",6); //dest address NSAP DEV1
                     memcpy( &header[15],"\x05\x49\xFF\x8B\x2B\x01",6); //source address NSAP
                     break;
                 case E_HEADER_TPDU_20:

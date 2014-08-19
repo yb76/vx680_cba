@@ -103,7 +103,7 @@ int	EmvCallbackFnSelectAppMenu(char **pcMenuItems, int iMenuItemsTotal)
 
     UtilStrDup(&jsonvalue , NULL);
 
-	if(itemtotal == 1) return(last_item);
+	//if(itemtotal == 1) return(last_item);
 	if(itemtotal != iMenuItemsTotal ) {
 		int j = 0;
 		memset(namearr,0,sizeof(namearr));
@@ -115,10 +115,15 @@ int	EmvCallbackFnSelectAppMenu(char **pcMenuItems, int iMenuItemsTotal)
 		}
 		selected = DispArray(30000, (char **)namearr,j);
 	} else {
+		int iTo = 30000;
+		if(itemtotal == 1) iTo = 5000;
 		//gEmv.appsTotal = iMenuItemsTotal;
-		selected = DispArray(30000, pcMenuItems,iMenuItemsTotal);
+		selected = DispArray(iTo, pcMenuItems,iMenuItemsTotal);
 	}
+
 	if(selected > 0) return(selected);
+	else if(itemtotal == 1 && (selected == -1 * EVT_TIMEOUT)) return(1);
+
 	return(0);
 }
 
@@ -151,7 +156,6 @@ void	EmvCallbackFnPromptManager(unsigned short usPromptId)
 	/*
 	** Map Verifone Prompt-ID to our Prompt-ID
 	*/
-	//DebugDisp( "EmvCallbackFnPromptManager %d", usPromptId);
       
     switch (usPromptId)
     {
@@ -167,22 +171,27 @@ void	EmvCallbackFnPromptManager(unsigned short usPromptId)
             szDspMsg =  "CARD BLOCKED";
             break;
         case E_PIN_REQD:
+			gEmv.pinentry = false;
             szDspMsg =  "PIN Required";
             break;
         case E_LAST_PIN_TRY:
+			gEmv.pinentry = false;
             szDspMsg = "Last PIN Try";
             break;
         case E_PIN_TRY_LT_EXCEED:
+			gEmv.pinentry = false;
             szDspMsg = "PIN Try Exceeded";
             break;        	
 		case E_USR_ABORT:
 		case E_USR_PIN_CANCELLED:
+			gEmv.pinentry = false;
  			szDspMsg = "PIN Cancelled" ;
             break;
         case E_USR_PIN_BYPASSED:
             //szDspMsg = "PIN Bypassed" ;
             break;        
         case E_PIN_BLOCKED:
+			gEmv.pinentry = false;
             szDspMsg =  "PIN Blocked";
             break;
         case EMV_PIN_SESSION_IN_PROGRESS:
@@ -192,9 +201,10 @@ void	EmvCallbackFnPromptManager(unsigned short usPromptId)
             //szDspMsg = "PIN Complete" ;
             break;
 		case E_APP_EXPIRED:
-			szDspMsg = "CARD ERROR";
+			/*  szDspMsg = "CARD ERROR";*/
 			break;
 		case E_INVALID_PIN:
+			gEmv.pinentry = false;
             szDspMsg =  "Incorrect PIN";
             break;
 		///****************************
@@ -329,8 +339,29 @@ void	EmvCallbackFnPromptManager(unsigned short usPromptId)
 */
 unsigned short	EmvFnAmtEntry(unsigned long *pulTxnAmt)
 {
-	unsigned long	dwAmtAuth=0;
-	*pulTxnAmt = (unsigned long)dwAmtAuth;
+	unsigned long	dwAmtAuth=*pulTxnAmt;
+	char AccountType = 0x00;
+	int cashamt= 0;
+	int iret = 0,iLen = 0;
+	char tmp[13];
+
+	EmvSetAmt(gEmv.amt,cashamt);
+
+	EMVCheckLocalCfgFile();
+	if(strlen(gEmv.acct)) {
+		if(strcmp(gEmv.acct,"SAVINGS")==0) {
+			AccountType = 0x10;
+		}
+		else if(strcmp(gEmv.acct,"CHEQUE")==0) {
+			AccountType = 0x20;
+		}
+		else if(strcmp(gEmv.acct,"CREDIT")==0) {
+			AccountType = 0x30;
+		}
+		usEMVAddTLVToCollxn(TAG_5F57_ACCOUNT_TYPE, (byte *)&AccountType, 1);
+	}
+
+	*pulTxnAmt = 0;
 	return(EMV_SUCCESS);
 }
 
@@ -489,7 +520,7 @@ unsigned short EmvFnOnlinePin(void)
 	
 	gEmv.onlinepin = false;
 	gEmv.offlinepin = false;
-	gEmv.pinentry = true;
+	gEmv.pinentry = false;
 
 	vSetPinParams(!gEmv.pinbypass_disable);//SECURE_PIN_MODULE changes
 	inVXEMVAPSetDisplayPINPrompt(NULL);
@@ -507,6 +538,8 @@ unsigned short EmvFnOnlinePin(void)
 	if (strcmp(outevent ,"KEY_NO_PIN")==0) {
 		return(E_USR_PIN_BYPASSED);
 	} else if (strcmp(outevent ,"KEY_OK")==0) { 
+		gEmv.pinentry = true;
+		gEmv.onlinepin = true;
 		return(EMV_SUCCESS);
 	} else {
 		return(E_USR_ABORT);

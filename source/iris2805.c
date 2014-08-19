@@ -373,8 +373,7 @@ void __as2805_break_custom(const char *msg,T_AS2805FIELD **flds, int *errfld)
 			if(fieldSize == -1) fieldSize = respLength - length;
 			AS2805BufferUnpack(fieldValue, formatType, fieldSize, response, &length);
 
-		//DebugDisp( "break vvv = %s %d %d %d %d %d  ", fieldValue, formatType, fieldSize, operation, length, respLength);
-							// Make sure we have not gone past the response field
+			// Make sure we have not gone past the response field
 			if (length > respLength) {
 				tooLong = true;
 				if(fieldValue) my_free(fieldValue);

@@ -415,8 +415,10 @@ int DisplayObject(const char *lines,T_KEYBITMAP keyBitmap,T_EVTBITMAP keepEvtBit
 								inverse = true;
 							else if (strcmp(value, "LARGE") == 0)
 								largeFont = true;
-							else if (strcmp(value, "WIDELBL") == 0) /*Dwarika .. for Wide lable*/
+							else if (strcmp(value, "WIDELBL") == 0) {
+								//largeFont = true;
 								nWideLbl = 1;
+							}
 							else if (strncmp(value, "BUTTON",6) == 0) {
 								button = true;
 								strcpy(sBMPEVT, value);

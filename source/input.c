@@ -464,7 +464,7 @@ uchar InpGetKeyEvent(T_KEYBITMAP keyBitmap, T_EVTBITMAP * evtBitmap, T_INP_ENTRY
 		while(read(conHandle, (char *) &keyCode, 1) == 1);
 
 		/* Enable or disable any MCR tracks */
-		 if (evtBitmap && *evtBitmap & EVT_MCR)
+		 if (evtBitmap && (*evtBitmap & EVT_MCR))
 		{
 			char temp[6];
 			if (mcrHandle == 0) mcrHandle = open(DEV_CARD, 0);
@@ -482,7 +482,7 @@ uchar InpGetKeyEvent(T_KEYBITMAP keyBitmap, T_EVTBITMAP * evtBitmap, T_INP_ENTRY
 
 
     // If timeout is requested, arm the default timer
-    if (evtBitmap && *evtBitmap & EVT_TIMEOUT)
+    if (evtBitmap && (*evtBitmap & EVT_TIMEOUT))
 		myTimer = set_timer(timeout, EVT_TIMER);
 
 	if (inpEntry.type == E_INP_PIN)
@@ -638,7 +638,7 @@ uchar InpGetKeyEvent(T_KEYBITMAP keyBitmap, T_EVTBITMAP * evtBitmap, T_INP_ENTRY
 		}
 
 		if (inpEntry.type == E_INP_PIN ) {
-			if (evtBitmap && *evtBitmap & EVT_TIMEOUT)
+			if (evtBitmap && (*evtBitmap & EVT_TIMEOUT))
 				evt = read_evt( EVT_TIMER);
 			else continue;
 		}
@@ -695,14 +695,14 @@ uchar InpGetKeyEvent(T_KEYBITMAP keyBitmap, T_EVTBITMAP * evtBitmap, T_INP_ENTRY
 		}
 		//Dwarika .. For touch
 
-		if((keyCode == 0x00)&& evt & EVT_KBD)
+		if((keyCode == 0x00)&& (evt & EVT_KBD))
 		{
 			read(conHandle, (char *) &keyCode, 1);
 		}
 
 		/* If key press is requested and a key is pressed... */
 		//if (evt & EVT_KBD && inpEntry.type != E_INP_PIN && keyBitmap != KEY_NO_BITS && read(conHandle, (char *) &keyCode, 1) == 1)
-		if (evt & EVT_KBD && inpEntry.type != E_INP_PIN && keyBitmap != KEY_NO_BITS && keyCode)
+		if ((evt & EVT_KBD) && inpEntry.type != E_INP_PIN && keyBitmap != KEY_NO_BITS && keyCode)
 		{
 			if(keyCode != KEY_ALPHA)
 				keyCode &= 0x7F;
@@ -719,7 +719,7 @@ uchar InpGetKeyEvent(T_KEYBITMAP keyBitmap, T_EVTBITMAP * evtBitmap, T_INP_ENTRY
 			/* Check if the key press should be returned to the caller */
 			for (index = 0; sKey[index].bKeyCode != KEY_NONE; index++)
 			{
-				if (sKey[index].bKeyCode == keyCode && sKey[index].tKeyBitmap & keyBitmap)
+				if (sKey[index].bKeyCode == keyCode && (sKey[index].tKeyBitmap & keyBitmap))
 				{
 					
 					if (keyCode == KEY_CLR && inpEntry.type != E_INP_NO_ENTRY)
@@ -965,18 +965,18 @@ uchar InpGetKeyEvent(T_KEYBITMAP keyBitmap, T_EVTBITMAP * evtBitmap, T_INP_ENTRY
 			}
 		}
 		// If the comms event is requested, return if data available
-		if (evtBitmap && *evtBitmap & EVT_SERIAL_DATA && evt & EVT_COM1)
+		if (evtBitmap && (*evtBitmap & EVT_SERIAL_DATA) && (evt & EVT_COM1))
 			myEvtBitmap = EVT_SERIAL_DATA;
 
 		// If the comms event is requested, return if data available
-		else if (evtBitmap && *evtBitmap & EVT_SERIAL2_DATA && evt & EVT_COM2)
+		else if (evtBitmap && (*evtBitmap & EVT_SERIAL2_DATA) && (evt & EVT_COM2))
 			myEvtBitmap = EVT_SERIAL2_DATA;
 
 		/* If the screen timeout expires, return */
-		else if (evtBitmap && *evtBitmap & EVT_TIMEOUT && evt & EVT_TIMER)
+		else if (evtBitmap && (*evtBitmap & EVT_TIMEOUT) && (evt & EVT_TIMER))
 			myEvtBitmap = EVT_TIMEOUT;
 
-		else if (myEvtBitmap == EVT_NONE && evtBitmap && *evtBitmap & EVT_MCR && evt & EVT_MAG)
+		else if (myEvtBitmap == EVT_NONE && evtBitmap && (*evtBitmap & EVT_MCR) && (evt & EVT_MAG))
 			myEvtBitmap = EVT_MCR;
 
 #ifdef __EMV
@@ -1357,6 +1357,7 @@ int flush_touch(void)
 	while(penDown){
 		penDown = get_touchscreen (&touch_x, &touch_y);
 	}
+	return(0);
 }
 
 
@@ -1364,22 +1365,25 @@ int ctlsCall( int acc, long amt, int nosaf, char *tr1,char *tr2,char *tlvs,char 
 {
 	int ret;
 	int i;
+	int rc = 0;
 	_ctlsStru ctlsStru;
 	
 	set_display_color(CURRENT_PALETTE,1);
 	set_display_color(BACKGROUND_COLOR,65535);
-		
+
 	memset( &ctlsStru,0,sizeof(ctlsStru));
 	sprintf(ctlsStru.sAmt,"%012d",amt);
 	ctlsStru.nosaf = nosaf;
 	 
-	ret = AcquireCard('1', 50000,&ctlsStru);
-	if(ret>=0) 
+	if(EmvIsCardPresent()) ret = -1002;// chip card inserted
+	else ret = AcquireCard('1', 50000,&ctlsStru);
+
+	if(ret>=0) {
 		ProcessCard();
+	}
 	
 	if(ctlsStru.nTLvLen > 5)
 	{
-		LOG_PRINTFF(0x00000001L,"sTLvData" );
 		memcpy(tlvs,ctlsStru.sTLvData,ctlsStru.nTLvLen);
 	}
 
@@ -1396,7 +1400,8 @@ int ctlsCall( int acc, long amt, int nosaf, char *tr1,char *tr2,char *tlvs,char 
 	
 	CancelAcquireCard(0);
 	ctlsReset();
-	if(ret>=0) SVC_WAIT(200);
+
+	SVC_WAIT(200);
 		
 	return(0);
 }
@@ -1413,7 +1418,7 @@ int ctlsCall( int acc, long amt, int nosaf, char *tr1,char *tr2,char *tlvs,char 
 **
 **-----------------------------------------------------------------------------
 */
-void __lowPower(int event,int tcpcheck, long timeout, long timeout_fail)
+void __lowPower(int event,int tcpcheck, long timeout, long timeout_fail,long shutdowntm)
 {
 	int keyCode = 0;
 	long wait=0;
@@ -1448,8 +1453,11 @@ void __lowPower(int event,int tcpcheck, long timeout, long timeout_fail)
 
 			if(read(conHandle, (char *) &keyCode, 1) >0) break;
 			SVC_WAIT(interval);
-			tm_total += interval;
-			//if(tm_total > 1000 * 60 * 60 * 5 ) SVC_SHUTDOWN();
+			if(shutdowntm) {
+				tm_total += interval;
+				//if(tm_total > 1000 * 60 * 60 * 5 ) SVC_SHUTDOWN()	;
+				if(tm_total > shutdowntm ) SVC_SHUTDOWN()	;
+			}	
 			/*  
 			if (timerID >= 0) clr_timer(timerID);
 			timerID = set_timer(60000,EVT_TIMER);
@@ -1459,9 +1467,7 @@ void __lowPower(int event,int tcpcheck, long timeout, long timeout_fail)
 			*/
 
 			if(tm && tcpcheck) {
-				int evt = 0;
 				wait += interval;
-
 				if(wait>=tm && tcpcheck) {
 					char stmp[64];
 					char stmp2[64];

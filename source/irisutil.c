@@ -243,21 +243,27 @@ static uint getNextObject(char * objects, uint * index, uint objectsLength)
 	return 0;
 }
 
-void DoTmsCmd()
+void DoTmsCmd(const char *jsonobj)
 {
 	uint length;
 	char *objects = NULL;
+	const char *jsonfile = "TMS_CMDTODO";
 
-	//TODO
 
-	if((objects = IRIS_GetObjectData("TMS_CMDTODO", &length))==NULL) {
+	if(jsonobj && strlen(jsonobj)) objects = (char *)jsonobj;
+	else objects = IRIS_GetObjectData(jsonfile, &length);
+
+	if(objects ==NULL) {
 		return ;
 	}
 
+	_remove(jsonfile);
+	//it might SHUTDOWN() in the following store process
 	__store_objects(0,objects,NULL,NULL);
 
-	_remove("TMS_CMDTODO");
-	my_free(objects);
+	if(jsonobj == NULL || strlen(jsonobj)==0) {
+		my_free(objects);
+	}
 }
 
 void __store_objects(int unzip,char *objects,int* nextmsg,char **response)
@@ -276,7 +282,6 @@ void __store_objects(int unzip,char *objects,int* nextmsg,char **response)
 		return;
 	}
 
-/*	DebugDisp( "size => %d ", strlen(objects)); */
 	// Convert from string to hex
 	if(unzip) {
 		size = strlen(objects)/2;

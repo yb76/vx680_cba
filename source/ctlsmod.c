@@ -246,7 +246,6 @@ int ctlsInitialise(int port)
 		if (ret != 0)
 		{
 			// dbprintf("ctlsInitialise: error initialising CTLS reader");
-			//DebugDisp("ctlsInitialise: error initialising CTLS reader");
 			return -1;
 		}
 
@@ -282,13 +281,11 @@ int ctlsInitialise(int port)
 
 	if (ViVOpayLoadConfig() != 0)
 	{
-		//DebugDisp("ctlsInitialise: error vivopayloadconfig");
 		return -1;
 	}
 
 	if (ViVOpayProcessAIDTable() != 0)
 	{
-		//DebugDisp("ctlsInitialise: error vivopayprocessaid");
 		return -1;
 	}
 
@@ -861,7 +858,6 @@ int ctlsEnable( int timeout, int trantype, unsigned long amount, ctls_read_cb ca
 			}
 			else
 			{
-				//DebugDisp("send command failed");
 				return -1;
 			}
 		}
@@ -870,7 +866,6 @@ int ctlsEnable( int timeout, int trantype, unsigned long amount, ctls_read_cb ca
 		
 		if (ctls_vivotech_cmd[SET_POLL].command != resp[10])
 		{
-			//DebugDisp("resp command failed");
 			return -1;
 		}
 	}
@@ -927,7 +922,6 @@ int ctlsEnable( int timeout, int trantype, unsigned long amount, ctls_read_cb ca
 			return -1;
 		}
 
-		//DebugDisp("lcd=%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x",resp[14],resp[15],resp[16],resp[17],resp[18],resp[19],resp[20],resp[21],resp[22],resp[23]);
 	}
 	LOG_PRINTFF(0x00000001L,"ctlsEnable 8");
 	if (ViVOtechGenerateCommand(ACTIVATE_TRAN, req, &reqlen, data, sizeof(data)) != 0)
@@ -1898,7 +1892,6 @@ int ViVOpayGetConfig(void)
 					SVC_HEX_2_DSP((char *)&respCmd[offset], tagresult, taglength);
 					tagresult[taglength * 2] = 0;
 					sprintf(&buffer[bufferlen], "[%s]: [%s]", tagname, tagresult);
-					//DebugDisp("tag[%s]:[%s]",tagname,tagresult);
 					bufferlen = strlen(buffer);
 					offset += taglength;
 				}

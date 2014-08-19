@@ -262,7 +262,8 @@ static int terminal_ErrorBeep (lua_State *L) {
 }
 
 static int terminal_DoTmsCmd (lua_State *L) {
-    DoTmsCmd();
+  	const char *jsonobj = lua_tostring(L,1);
+    DoTmsCmd(jsonobj);
     return 0;
 }
 
@@ -280,9 +281,6 @@ static int terminal_Model (lua_State *L) {
   SVC_INFO_MODELNO(model);
   while (model[i-1] == ' ') i--;
   model[i] = '\0';
-
-  //Dwarika .. test
-  strcpy(model,"VX670");
 
   lua_pushstring(L, model);  /*  push result */
   return 1;  /*  number of results */
@@ -1315,7 +1313,8 @@ static int terminal_PowerSaveMode (lua_State *L) {
   const unsigned long tcpchk = lua_tonumber(L,2);
   const unsigned long tmout = lua_tonumber(L,3);
   const unsigned long tmout_2 = lua_tonumber(L,4);
-  __lowPower( evt,tcpchk,tmout,tmout_2);
+  const unsigned long tmout_3 = lua_tonumber(L,5);
+  __lowPower( evt,tcpchk,tmout,tmout_2,tmout_3);
   return 0;  /*  number of results */
 }
 
@@ -1333,7 +1332,9 @@ static int terminal_EmvTransInit (lua_State *L) {
 }
 
 static int terminal_EmvSelectApplication (lua_State *L) {
-  int emvret = EMVSelectApplication();
+  const unsigned long amt = lua_tonumber(L,1);
+  const unsigned long acc = lua_tonumber(L,2);
+  int emvret = EMVSelectApplication(amt,acc);
   lua_pushinteger(L, emvret);  /*  push result */
   return 1;  /*  number of results */
 }
@@ -1571,78 +1572,9 @@ static int terminal_EmvTLVReplace(lua_State *L) {
 #endif
 
 static int terminal_InitCommEng (lua_State *L) {
-  InitComEngine();
-  return 1;  /*  number of results */
-}
-
-static int terminal_SendTcpComm (lua_State *L) {
-  const char* msg = lua_tostring(L,1);
-  int Len = 0;
-  int nRetVal = -1;
-	Len = strlen(msg);
-
-  nRetVal = inSendTCPCommunication( msg,Len);
-  if(nRetVal >= 1)
-	lua_pushstring(L, "NOERROR");  /*  push result */
-  else
-	lua_pushstring(L, "ERROR");  /*  push result */
-
-  return 1;  /*  number of results */
-}
-
-static int terminal_RecvTcpComm (lua_State *L) {
-  int nTimeOut = lua_tonumber(L,1);
-   char *rcvmsg = NULL;
-  int nRetVal = -1;
-
-  nRetVal = inReceiveTCPCommunication(rcvmsg,nTimeOut);
-  if(nRetVal >= 1)
-	lua_pushstring(L, "NOERROR");  /*  push result */
-  else
-	lua_pushstring(L, "ERROR");  /*  push result */
-
- if(rcvmsg) lua_pushstring(L, rcvmsg);  /*  push result */
-  else lua_pushstring(L,"");
-  if(rcvmsg) UtilStrDup(&rcvmsg, NULL);
-  return 2;  /*  number of results */
-
-}
-
-static int terminal_GetApplVer (lua_State *L) {
-  char rcvmsg[30] = "";
-  
-  inGetApplVer(rcvmsg);
-  
-  lua_pushstring(L, rcvmsg);  /*  push result */
-  
-  return 1;  /*  number of results */
-
-}
-
-static int terminal_Print_Debug (lua_State *L) {
-  const char* prtdata = lua_tostring(L,1);
-  int endflag = lua_toboolean(L,2);
-  char* prtrtn = NULL;
-  char Dprtdata[201] = {"\0"};
-  int i = 0 ;
-  int len = strlen(prtdata);
-  //prtrtn = (char*)__print_cont( "\\n", endflag );
-  prtrtn = (char*) PrtPrintBuffer(strlen("\033k042"), "\033k042", 0);
-  while(len>0)
-  {
-	  memset(Dprtdata, '\0', sizeof(Dprtdata));
-	  if (len > 190)
-		strncpy(Dprtdata, &prtdata[i], 190);
-	  else
-		strcpy(Dprtdata, &prtdata[i]);
-	  prtrtn = (char*) PrtPrintBuffer(strlen(Dprtdata), Dprtdata, 2);//E_PRINT_END
-	  len=len-190;
-	  i=i+190;
-  }
-  prtrtn = (char*) PrtPrintBuffer(strlen("\n\n"), "\n\n", 2);//E_PRINT_END
-  //prtrtn = (char*)__print_cont( "\\n\\n", endflag );
-  lua_pushstring(L, prtrtn);  /*  push result */
-  UtilStrDup(&prtrtn,NULL);
+  const char *initType = lua_tostring(L,1);
+  if(initType == NULL || strlen(initType) == 0 || strcmp(initType,"COMM") == 0) InitComEngine();
+  if(initType == NULL || strlen(initType) == 0 || strcmp(initType,"CTLS") == 0) InitCtlsPort();
   return 1;  /*  number of results */
 }
 
@@ -1654,6 +1586,8 @@ static int terminal_CtlsCall (lua_State *L) {
   char tr2[50]="";
   char tlvs[1024]="";
   char emvres[10]="";
+
+  memset(tlvs,0,sizeof(tlvs));
   ctlsCall(acc,amt,nosaf,tr1,tr2,tlvs,emvres);
 	 
   lua_pushstring(L, tr1);  /*  push result */
@@ -1682,26 +1616,8 @@ static int terminal_SysEnv(lua_State *L) {
   return 1; /*  number of results */
 }
 
-static int terminal_GetConfSysStanROC(lua_State *L) {
-  char Stan[15]="";
-  char Roc[15]="";
-  get_env("TMPSTAN", Stan, sizeof(Stan));
-  get_env("TMPROC", Roc, sizeof(Roc));
-  lua_pushstring(L, Stan);  /*  push result */
-  lua_pushstring(L, Roc);  /*  push result */
-  return 2; /*  number of results */
-}
-
-static int terminal_vPrintEMVAllAids (lua_State *L) {
-  
-  vPrintEMVAllAids();
-  inPrintCTLSEmvPrm();
-  
-  return 0; /*  number of results */
-}
-
 static const luaL_Reg terminallib[] = {
-  {"DisplayObject",terminal_DisplayObject},
+  {"DisplayObject", terminal_DisplayObject},
   {"DebugDisp", terminal_DebugDisp},
   {"SetNextObject", terminal_SetNextObject},
   {"SetScreenName", terminal_SetScreenName},
@@ -1790,14 +1706,8 @@ static const luaL_Reg terminallib[] = {
   {"DisplayArray",terminal_DisplayArray},
   {"PowerSaveMode",terminal_PowerSaveMode},
   {"InitCommEng",terminal_InitCommEng},
-  {"SendTcpComm",terminal_SendTcpComm},
-  {"RecvTcpComm",terminal_RecvTcpComm},
-  {"GetApplVer",terminal_GetApplVer},
-  {"Print_Debug",terminal_Print_Debug},	  
   {"CtlsCall",terminal_CtlsCall},	  
-  {"GetConfSysStanROC",terminal_GetConfSysStanROC},
   {"SysEnv",terminal_SysEnv},
-  {"vPrintEMVAllAids",terminal_vPrintEMVAllAids},
   {"CTLSEmvGetTac",terminal_CTLSEmvGetTac},
   {"CTLSEmvGetLimit",terminal_CTLSEmvGetLimit},
   

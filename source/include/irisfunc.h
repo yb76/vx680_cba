@@ -66,7 +66,7 @@ char DebugDisp (const char *template, ...);
 int EmvGetPTermID(char *ptid);
 int EMVPowerOn(void);
 int EMVTransInit(void);
-int EMVSelectApplication(void);
+int EMVSelectApplication(const long amt, const long acc);
 int EMVReadAppData(void);
 int EMVDataAuth(void);
 int EMVProcessingRestrictions (void);
@@ -100,7 +100,7 @@ void ascii_to_binary(char *dest, const char *src, int length);
 short findTag(unsigned short tag, unsigned char *value, short *length, const unsigned char *buffer,short bufLen);
 short getNextRawTLVData(unsigned short *tag, unsigned char *data, const unsigned char *buffer);
 short getNextTLVObject(unsigned short *tag, short *length, unsigned char *value, const unsigned char *buffer);
-int createScriptFiles(const unsigned char *scriptBuf,short bufLen,char *sc1,short *sc1len, char *sc2, short *sc2len);
+int createScriptFiles(uchar *scriptBuf, short bufLen, uchar* pScript71, unsigned short *usScript71Len, uchar* pScript72, unsigned short *usScript72Len );
 int EmvGetTacIac(char * tac_df, char * tac_dn, char *tac_ol, char * iac_df, char *iac_dn, char *iac_ol);
 
 
@@ -140,7 +140,7 @@ void __as2805_break_custom(const char *msg,T_AS2805FIELD **flds, int *errfld);
 char * __print_cont(const char * data,bool endflag);
 void __print_err(char * result);
 void __shutdown(void);
-void __lowPower(int event,int tcpcheck, long timeout, long timeout_fail);
+void __lowPower(int event,int tcpcheck, long timeout, long timeout_fail,long timeout_shutdown);
 
 /*iris_cfg.c*/
 void __sec_init(void);

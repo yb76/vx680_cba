@@ -41,6 +41,7 @@ EMV_GLOBAL gEmv;
 static	struct _emvcfg_list {
 		int total;
 		char *filename[15];
+		int current;
 } emvcfg_list;
 
 int EmvGetPTermID(char *ptid)
@@ -80,121 +81,13 @@ int	EMVPowerOn(void)
 	static int started = 0;
 	char	acAidEst[20]="";
 	char	emvCfgfile[40]="";
+	srAIDList aidList;
+	unsigned short aidCnt = 30;
+	unsigned short blockAidCount;
+	int i = 0;
 
 	if( started ) return(0);
 	DispInit();
-
-	memset(&emvcfg_list,0,sizeof(emvcfg_list));
-	emvcfg_list.total = 0;
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID1((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID2((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID3((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID4((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID5((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID6((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID7((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID8((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID9((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
-
-	memset(acAidEst, 0, sizeof(acAidEst));
-	szGetESTSupportedAID10((char*)acAidEst);
-	if(strlen(acAidEst) > 0) {
-		sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
-		if(FileExist(emvCfgfile)) {
-			emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
-			strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
-			emvcfg_list.total ++;
-		}
-	}
 
 	/*
 	** Normal terminal power-on processing
@@ -231,6 +124,26 @@ int	EMVPowerOn(void)
 		return(ERR_EMV_CONFIG_ERROR);
 	}
 
+	memset(&emvcfg_list,0,sizeof(emvcfg_list));
+	emvcfg_list.total = 0;
+
+	status = inGetESTSupportedAIDs(&aidList);
+	for(i=0;i<aidList.countAID;i++) {
+			if(aidList.arrAIDList[i].lenOfAID) {
+				memset(acAidEst,0,sizeof(acAidEst));
+				strncpy(acAidEst,aidList.arrAIDList[i].stAID,aidList.arrAIDList[i].lenOfAID);
+
+				UtilHexToString(aidList.arrAIDList[i].stAID, aidList.arrAIDList[i].lenOfAID, acAidEst);
+				sprintf(emvCfgfile,"EMVCFG%s", acAidEst);
+				if(FileExist(emvCfgfile)) {
+					emvcfg_list.filename[emvcfg_list.total] = malloc ( strlen(emvCfgfile) +5 );
+					strcpy(emvcfg_list.filename[emvcfg_list.total], emvCfgfile);
+					emvcfg_list.total ++;
+				}
+			}
+	}
+
+
 	started = 1;
 	return(SUCCESS);
 }
@@ -241,8 +154,10 @@ int	EMVTransInit(void)
 	char transType;
 	char serialBuf[20];
 
+	EMVPowerOn();
 	// init global
 	memset( &gEmv,0,sizeof(gEmv));
+	emvcfg_list.current = 0;
 
 	/*
 	** Sanity check
@@ -297,15 +212,27 @@ int	EMVTransInit(void)
 **	The callback functions need to be finished/done
 **
 */
-int	EMVSelectApplication(void)
+int	EMVSelectApplication(const long amt, const long acc)
 {
 	int				iAutoSelect=inGetAutoSelectApplnFlag();
 	unsigned int 	usDefaultRecordRFU1 = inGetShortRFU1();
 	int				iStatus;
 
+
 	/*************************************************************
 	** Application selection
+
+	inVXEMVAPSelectApplication() EMV kernel API performs both application
+	selection and GPO, unless specified to split the functionality to perform only
+	application selection, by setting the MVT short RFU1 field's bit 8. If the
+	application has chosen to perform application selection and GPO separately,
+	then the application can perform the language selection prior calling
+	inVXEMVAPPerformGPO() API.
+
 	*************************************************************/
+
+	if (amt > 0) gEmv.amt = amt;
+
 	iStatus = inVXEMVAPSelectApplication(iAutoSelect, EmvCallbackFnSelectAppMenu, EmvCallbackFnPromptManager, EmvFnAmtEntry, NULL);
 	if( (usDefaultRecordRFU1 & 0x0080) && (iStatus == SUCCESS) ) {
 		iStatus = inVXEMVAPPerformGPO();
@@ -322,10 +249,11 @@ int	EMVSelectApplication(void)
 		{
 			unsigned short cnt = 21;
 			unsigned short	usAidBlockedTotal=0;
+			int iret = 0;
 			srAIDListStatus	sAidListStatus[21];
 
 			if(gEmv.appsTotal >0) cnt = gEmv.appsTotal;
-			usEMVGetAllAIDStatus(sAidListStatus, &cnt, &usAidBlockedTotal);
+			iret = usEMVGetAllAIDStatus(sAidListStatus, &cnt, &usAidBlockedTotal);
 			if (usAidBlockedTotal > 0)
 			{
 				iStatus = APPL_BLOCKED;
@@ -336,9 +264,6 @@ int	EMVSelectApplication(void)
 			gEmv.techfallback = false ;
 		else
 			gEmv.techfallback = true ;
-        /*
-        ** Map Verix-V EMV error to our error???
-        */
 		return(iStatus);
 	}
 
@@ -852,10 +777,12 @@ int	EMVReadAppData(void)
 				gEmv.techfallback = false;
 		else
 				gEmv.techfallback = true;
-        return(status);
 	}
-	
-	{
+    return(status);
+}
+
+int EMVCheckLocalCfgFile()
+{
 		uchar aid_hex[17]="";
 		char aid[40]="";
 		ushort iLen;
@@ -869,10 +796,13 @@ int	EMVReadAppData(void)
 		sprintf(emvCfgfile,"EMVCFG%s", aid);
 		for(i=0;i<emvcfg_list.total;i++) {
 			if(emvcfg_list.filename[i] ==NULL) break;
-			if(strcmp(emvCfgfile, emvcfg_list.filename[i])==0) { found = true ; break;}
+			// compare EMVCFGA0000002501 and AID A00000002501nnnn
+			if(strncmp(emvCfgfile, emvcfg_list.filename[i],strlen(emvcfg_list.filename[i]))==0) { found = true ; break;}
 		}
 
 		if(found) {
+			emvcfg_list.current = i+1;
+			strcpy(emvCfgfile, emvcfg_list.filename[i]);
   			cfgdata = (char*)IRIS_GetObjectData( emvCfgfile, (unsigned int*)&iLen);
 			if(cfgdata) {
         		char *acct = (char*)IRIS_GetObjectTagValue( cfgdata, "ACCT" );
@@ -884,7 +814,6 @@ int	EMVReadAppData(void)
     			UtilStrDup(&cfgdata , NULL);
 			}
 		}
-	}
 
 	return SUCCESS;
 }
@@ -920,9 +849,12 @@ int EMVProcessingRestrictions (void)
 	usEMVGetTLVFromColxn(TAG_4F_AID, aid_hex, &iLen);
 	UtilHexToString((const char *)aid_hex,iLen,aid);
 
-	sprintf(emvCfgfile,"EMVCFG%14.14s", aid);
-  	cfgdata = (char*)IRIS_GetObjectData( emvCfgfile, (unsigned int*)&iLen);
-	if(cfgdata) {
+	if(emvcfg_list.current ) {
+		strcpy(emvCfgfile, emvcfg_list.filename[emvcfg_list.current-1]);
+  		cfgdata = (char*)IRIS_GetObjectData( emvCfgfile, (unsigned int*)&iLen);
+	}
+	if(cfgdata) 
+	{
 		char *sfloorlimit = NULL;
 		char *sRSThreshold= NULL; 
 		char *sRSTarget= NULL;
@@ -1193,7 +1125,7 @@ int EmvUseHostData(int hostDecision,const char *hexdata,short len)
             usEMVUpdateTLVInCollxn(0x9100, buffer, taglen); 
 	}
  
-    if(len) numScripts = createScriptFiles((const byte *)hexdata,len,buffer1,&len1,buffer2,&len2);
+    if(len) numScripts = createScriptFiles((byte *)hexdata,len,buffer1,&len1,buffer2,&len2);
 	iret = inVXEMVAPUseHostData(hostDecision, issuerScriptResults, &numScripts,buffer1,len1,buffer2,len2);
 	if(iret) return(iret);
 	
@@ -1224,6 +1156,9 @@ int EmvUseHostData(int hostDecision,const char *hexdata,short len)
 int	EmvCardPowerOff(void)
 {
 	
+	memset( &gEmv,0,sizeof(gEmv));
+	emvcfg_list.current = 0;
+
 	/*
 	** Check that the card is still in the ICC reader
 	*/
@@ -1303,22 +1238,20 @@ int EmvSetAmt(long emvAmount,long emvCash)
 
 	if( emvAmount >= 0 )  {
 		char tmp[13];
-		char ucharBuf[6];
+		char ucharBuf[7];
+		int iret = 0;
 
-		gEmv.amt = emvAmount;
 		usEMVUpdateTLVInCollxn(TAG_81_AMOUNT_AUTH, (byte *) &emvAmount, 4);
 
-		memset(tmp,0x00,sizeof(tmp));
-		sprintf(tmp, "%012lu", emvAmount);
-		ascii_to_binary(ucharBuf, (const char *) tmp, 12);
-		usEMVUpdateTLVInCollxn(TAG_9F02_AMT_AUTH_NUM, (byte *) ucharBuf, 6);
+		iret = usEMVAddAmtToCollxn( emvAmount); //9F02
 
-		if ( emvCash >= 0 ) {
+		if ( emvCash >= 0 ) 
+		{
 			usEMVUpdateTLVInCollxn(TAG_9F04_AMT_OTHER_BIN, (byte *) &emvCash, 4);
 			memset(tmp,0x00,sizeof(tmp));
 			sprintf(tmp, "%012lu", emvCash);
 			ascii_to_binary(ucharBuf, (const char *) tmp, 12);
-			usEMVUpdateTLVInCollxn(TAG_9F03_AMT_OTHER_NUM, (byte *) ucharBuf, 6);
+			iret = usEMVUpdateTLVInCollxn(TAG_9F03_AMT_OTHER_NUM, ucharBuf, 6);
 		}
 	}
 	return 0;
@@ -1326,7 +1259,7 @@ int EmvSetAmt(long emvAmount,long emvCash)
 
 int EmvSetAccount(unsigned char emvAcc)
 {
-	usEMVUpdateTLVInCollxn (TAG_5F57_ACCOUNT_TYPE, (unsigned char *)&emvAcc, 1);
+	int iret = usEMVUpdateTLVInCollxn (TAG_5F57_ACCOUNT_TYPE, (unsigned char *)&emvAcc, 1);
 	return(0);
 }
 
