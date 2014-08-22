@@ -63,6 +63,7 @@ sub ParseFile($)
 	my $end = 0;
 	my $oldfile=undef;
 	my $wfile = "$luadir/luatmp";
+	my $main_tmp = "$luadir/LUA_MAIN_$infile.tmp";
 	my $wfile_end = "$luadir/luatmp_end";
 
 
@@ -71,7 +72,8 @@ sub ParseFile($)
         Error( "Invalid file " );
 		exit(1);
 	}
-    open $fmain, "> $luadir/LUA_MAIN_$infile";
+	#open $fmain, "> $luadir/LUA_MAIN_$infile";
+    open $fmain, "> $main_tmp";
 
     while (<$fh>) { 
 		my ($line) = $_;
@@ -118,7 +120,13 @@ sub ParseFile($)
 		if($fw) {close $fw;}
 	}
     close $fh;
+    close $fmain;
+	if(compare("$luadir/LUA_MAIN_$infile",$main_tmp)==0) {
+	}else{
+		copy( $main_tmp,"$luadir/LUA_MAIN_$infile");
+	}
 	unlink($wfile);
+	unlink($main_tmp);
 
 }
 

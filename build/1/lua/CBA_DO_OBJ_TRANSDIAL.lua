@@ -7,13 +7,6 @@ function do_obj_transdial()
     if not txn.earlyemv then
 	  if terminal.EmvIsCardPresent() then
 		local acc = (txn.account=="SAVINGS" and 0x10 or txn.account == "CHEQUE" and 0x20 or txn.account=="CREDIT" and 0x30)
-		local transtype = (txn.func=="PRCH" and txn.cashamt >0 and "09" or txn.func == "CASH" and "01" or "00")
-		local terminalDesicion = 0
-		--if terminalDesicion > 0 then terminal.EmvGlobal("SET","TERMDESICION",tostring(terminalDesicion)) end
-		if emvret == 0 then
-			emvret = terminal.EmvSetTagData(0x9C00, transtype) end
-		if emvret == 0 then
-			emvret = terminal.EmvSetAmt(txn.totalamt,txn.cashamt) end
 		if emvret == 0 then
 			emvret = terminal.EmvSetAccount(acc) end
 		if emvret == 0 then

@@ -87,7 +87,8 @@ function emv_init()
   local ok = 0
   if txn.chipcard then
 	ok = terminal.EmvTransInit()
-    if ok == 0 then ok = terminal.EmvSelectApplication() end
+	local amt,acctype = ecrd.AMT,0
+    if ok == 0 then ok = terminal.EmvSelectApplication(amt,acctype) end
     if ok ~= 0 and ok ~= 103 --[[CARD_REMOVED]] and ok ~= 104 --[[CARD_BLOCKED]] and ok ~= 105 --[[APPL_BLOCKED]] and ok ~= 110 --[[TRANS_CANCELLED]] and ok ~= 130 --[[INVALID_PARAMETER]] then
       txn.emv.fallback = true
     end
@@ -656,13 +657,6 @@ function do_obj_transdial()
     if not txn.earlyemv then
 	  if terminal.EmvIsCardPresent() then
 		local acc = (txn.account=="SAVINGS" and 0x10 or txn.account == "CHEQUE" and 0x20 or txn.account=="CREDIT" and 0x30)
-		local transtype = (txn.func=="PRCH" and txn.cashamt >0 and "09" or txn.func == "CASH" and "01" or "00")
-		local terminalDesicion = 0
-		--if terminalDesicion > 0 then terminal.EmvGlobal("SET","TERMDESICION",tostring(terminalDesicion)) end
-		if emvret == 0 then
-			emvret = terminal.EmvSetTagData(0x9C00, transtype) end
-		if emvret == 0 then
-			emvret = terminal.EmvSetAmt(txn.totalamt,txn.cashamt) end
 		if emvret == 0 then
 			emvret = terminal.EmvSetAccount(acc) end
 		if emvret == 0 then
@@ -1111,11 +1105,13 @@ function do_obj_txn_resp()
 	end
   else
     txn.host_response = true
-    local msg_t = {"GET,12","GET,13","GET,15","GETS,37","GETS,38","GETS,39","GETS,44","GETS,47","GETS,48","GETS,55","GETS,64" }
-    errmsg,fld12,fld13,fld15,fld37,fld38,fld39,fld44,fld47,fld48,fld55,fld64 = terminal.As2805Break( rcvmsg, msg_t )
+    local msg_t = {"GET,12","GET,13","GET,15","GETS,37","GETS,38","GETS,39","GETS,48","GETS,55","GETS,64" }
+    errmsg,fld12,fld13,fld15,fld37,fld38,fld39,fld48,fld55,fld64 = terminal.As2805Break( rcvmsg, msg_t )
     if fld12 and fld13 then txn.time = fld13..fld12 end
     if fld38 and #fld38>0 then txn.authid = fld38 end
     if fld39 and #fld39>0 then txn.rc = fld39 end
+    if fld55 and #fld55>0 then terminal.DebugDisp("boyang...fld55="..fld55) end --TESTING
+
     if errmsg ~= "NOERROR" then return do_obj_txn_nok(errmsg)  -- as2805 error
     elseif fld39 ~= "00" and fld39 ~= "08" then 
       local HOST_DECLINED = 2
@@ -2355,6 +2351,10 @@ function swipecheck(track2)
   local cardname = terminal.TextTable("CARD_NAME",cardname_prefix)
 
   local chipflag = (panetc and string.sub(panetc,5,5) or "")
+  if chipflag == "2" or chipflag == "6" then
+    terminal.ErrorBeep(); return 0
+  end
+
   return 1,cardname
 end
 

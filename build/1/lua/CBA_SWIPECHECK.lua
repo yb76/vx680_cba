@@ -31,5 +31,9 @@ function swipecheck(track2)
   local cardname = terminal.TextTable("CARD_NAME",cardname_prefix)
 
   local chipflag = (panetc and string.sub(panetc,5,5) or "")
+  if chipflag == "2" or chipflag == "6" then
+    terminal.ErrorBeep(); return 0
+  end
+
   return 1,cardname
 end

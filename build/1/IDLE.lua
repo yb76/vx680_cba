@@ -117,7 +117,6 @@ function do_obj_idle()
 end
 
 function load_apps()
-		terminal.DebugDisp("idle...1")
   callback.timeout_func = {}
   callback.timeout_idx = 1
   local i = 0
@@ -128,11 +127,8 @@ function load_apps()
       require(app)
     end
     i = i + 1
-		terminal.DebugDisp("i=."..i)
   end
-		terminal.DebugDisp("before comm")
   require("COMM")
-		terminal.DebugDisp("idle...2")
 end
 
 function waitforunlock()
@@ -186,7 +182,6 @@ function init_config()
   config.merch_loc0 = (config.merch_loc0 ~="" and config.merch_loc0 or "GM CABS AUSTRALIA ")
   config.merch_loc1 = (config.merch_loc1 ~="" and config.merch_loc1 or "MASCOT        NSW AU")
   config.logok = false 
-  config.logok = true --TESTING
 
   config.key_pin,config.key_kmacr,config.key_kmacs = terminal.GetJsonValue("IRIS_CFG","KPE","KMACr","KMACs")
   config.key_ki,config.key_kca,config.key_kia,config.key_kt,config.key_tmp,config.key_kt_x = terminal.GetJsonValue("IRIS_CFG","KEY_KI","KEY_KCA","KEY_KIA","KEY_KT","KEY_TMP","KEY_KT_X")
