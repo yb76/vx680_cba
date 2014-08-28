@@ -17,7 +17,7 @@ function do_obj_print_saf()
 
 		local fname = "REVERSAL"
 		if terminal.FileExist(fname..revmin) then
-			local roc = terminal.GetJsonValue(fname..i,"ROC")
+			local roc = terminal.GetJsonValue(fname..revmin,"ROC")
 			prtvalue = prtvalue .."\\3REVERSAL".."\\R"..roc.."\\n"
 		end
 

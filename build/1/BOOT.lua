@@ -10,10 +10,6 @@ function init_config()
   KEY.CNCL = 0x800
   KEY.CLR  = 0x1000
   KEY.OK   = 0x2000
-  KEY.SK1  = 0x8000
-  KEY.SK2  = 0x10000
-  KEY.SK3  = 0x20000
-  KEY.SK4  = 0x40000
   KEY.LCLR = 0x4000000
   EVT.TIMEOUT = 0x01
 end
@@ -31,9 +27,7 @@ function do_obj_boot()
   	terminal.InitCommEng()
 
     local idx1,idx2,idx3=17,18,19
-    if commstype == "" then idx1,idx2,idx3=7,8,9 end
     local scrlines =  "LARGE,LOCAL_T,6,2,C;" .. "WIDELBL,LOCAL_T,"..idx1..",6,C;" .. "WIDELBL,LOCAL_T,"..idx2..",8,C;" .. ",LOCAL_T,"..idx3..",11,C;" .."TIMEDISP,,0,4,C;" 
-    local screvent
     terminal.SetNextObject("SELF_TEST.lua")
     return 0
   end

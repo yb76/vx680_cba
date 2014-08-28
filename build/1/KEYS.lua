@@ -1,12 +1,5 @@
---[[
-
-Change Log:
-2012/07/30-Anand Rai-Add change log and comment dead code.
-
-]]
 local ScrnTimeout = 30000
 local ScrnErrTimeout = 3000
-
 local KEY,EVT={},{}
 local SKmanPKtcuMOD = nil
 local SKmanPKtcuEXP = nil
@@ -154,11 +147,8 @@ end
 
 function do_obj_keys(serdata_in)
   local ok = true
-  
   ok = processMsg(serdata_in)
-
 --	RIS KEY
-  
   ok = ok and SKmanPKtcuMOD and SKmanPKtcuEXP and SKtcu and Ppid_bank and ( loadingStep == 6 )
   
   if not ok then

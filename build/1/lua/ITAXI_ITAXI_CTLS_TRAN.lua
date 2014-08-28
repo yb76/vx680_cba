@@ -9,8 +9,8 @@ function itaxi_ctls_tran()
     elseif tlvs ~= "" then
         local aid = get_value_from_tlvs("9F06",tlvs)
         translimit,cvmlimit =terminal.CTLSEmvGetLimit(aid)
-        if string.sub(aid,1,10)=="A000000003" and amt >= translimit or amt > translimit then tlvs = ""; emvres = "-1025" end
-        taxi.cvmlimit = cvmlimit
+        --if string.sub(aid,1,10)=="A000000003" and amt >= translimit or amt > translimit then tlvs = ""; emvres = "-1025" end
+        --taxi.cvmlimit = cvmlimit
     end
 
     local safexceed = (nosaf ==1 and tonumber(emvres) == 0)

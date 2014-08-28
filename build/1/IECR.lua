@@ -39,10 +39,3 @@ function do_obj_iecr_end(rtnvalue)
     return itaxi_finish()
   end
 end
-
-function do_obj_iecr_chk_manual_password()
-  local pwd = terminal.GetJsonValue("CONFIG","MOTO_PWD")
-  if pwd == "" then pwd = "110711" end
-  return check_pwd_moto(pwd)
-end
-

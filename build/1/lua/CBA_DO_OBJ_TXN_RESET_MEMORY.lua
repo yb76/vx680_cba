@@ -2,6 +2,7 @@ function do_obj_txn_reset_memory()
   local scrlines = "WIDELBL,THIS,RESET MEMORY?,2,C;".."WIDELBL,,73,3,C;"
   local screvent,_=terminal.DisplayObject(scrlines,KEY.CNCL+KEY.CLR+KEY.OK,EVT.TIMEOUT,ScrnTimeout)
   if screvent == "KEY_OK" then 
+	local fmax,fmin = 0,0
 	local scrlines = "WIDELBL,,27,2,C;" .."WIDELBL,,26,4,C;"
 	terminal.DisplayObject(scrlines,0,0,ScrnTimeoutZO)
 	terminal.SetJsonValue("CONFIG","BATCHNO", "000000")

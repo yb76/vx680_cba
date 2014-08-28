@@ -9,7 +9,6 @@ function swipecheck(track2)
 		return -1
   end
 
-
   local expirydate = (panetc and string.sub(panetc,1,4) or "")
   local currmonth = terminal.Time( "YYMM") 
   if expirydate ~= "" and tonumber(currmonth) > tonumber(expirydate) then

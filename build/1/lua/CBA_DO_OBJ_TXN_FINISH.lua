@@ -3,6 +3,7 @@ function do_obj_txn_finish(nosaf)
   terminal.FileRemove("REV_TODO")
   if txn.finishreturn then return txn.finishreturn
   else
+    terminal.TcpDisconnect()
     terminal.EmvResetGlobal()
     if txn.chipcard and terminal.EmvIsCardPresent() and not (ecrd and ecrd.RETURN) then
       terminal.EmvPowerOff()

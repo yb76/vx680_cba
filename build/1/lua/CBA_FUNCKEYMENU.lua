@@ -1,4 +1,5 @@
 function funckeymenu()
+  require ("CBACONFIG")
   local scrlines = ",,40,2,C;" .. "LHIDDEN,,0,5,17,8;"					   
   local screvent,scrinput = terminal.DisplayObject(scrlines,KEY.CNCL+KEY.CLR+KEY.OK,EVT.TIMEOUT,ScrnTimeout)
 
@@ -6,10 +7,8 @@ function funckeymenu()
     return do_obj_txn_finish()
   elseif screvent == "KEY_OK" then
     if scrinput == "7410" then
-      require ("CBACONFIG")
       return do_obj_termconfig()
     elseif scrinput == "3824" then
-      require ("CBACONFIG")
       return do_obj_termconfig_maintain()
     elseif scrinput == "5295" then
 	  if config.tid == "" or config.mid == "" then
@@ -31,7 +30,7 @@ function funckeymenu()
     elseif scrinput == "00200200" then
 	  return do_obj_txn_reset_memory()
 	elseif scrinput == "1982" then
-	  terminal.vPrintEMVAllAids()
+	  terminal.CTLSEmvGetCfg()
 	  return do_obj_txn_finish()
     else return do_obj_txn_finish()
     end

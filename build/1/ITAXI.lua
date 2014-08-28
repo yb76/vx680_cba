@@ -255,8 +255,8 @@ function itaxi_ctls_tran()
     elseif tlvs ~= "" then
         local aid = get_value_from_tlvs("9F06",tlvs)
         translimit,cvmlimit =terminal.CTLSEmvGetLimit(aid)
-        if string.sub(aid,1,10)=="A000000003" and amt >= translimit or amt > translimit then tlvs = ""; emvres = "-1025" end
-        taxi.cvmlimit = cvmlimit
+        --if string.sub(aid,1,10)=="A000000003" and amt >= translimit or amt > translimit then tlvs = ""; emvres = "-1025" end
+        --taxi.cvmlimit = cvmlimit
     end
 
     local safexceed = (nosaf ==1 and tonumber(emvres) == 0)
@@ -518,21 +518,21 @@ function itaxi_trailer12 ()
   local screvent,scrinput = terminal.DisplayObject(scrlines,scrkeys,EVT.TIMEOUT,ScrnTimeout)
   local nextstep = itaxi_smenu
   if screvent == "BUTTONM_1" then
-        scrlines = "LARGE,iTAXI_T,52,2,C;" .."STRING,"..taxicfg.trailer0..",0,6,3,22;".."BUTTONA,THIS,ALPHA ,B,C;"
+        scrlines = "LARGE,iTAXI_T,52,2,C;" .."STRING,"..taxicfg.trailer0..",0,6,3,30;".."BUTTONA,THIS,ALPHA ,B,C;"
         screvent,scrinput = terminal.DisplayObject(scrlines,KEY.CLR+KEY.CNCL+KEY.OK,EVT.TIMEOUT,ScrnTimeout)
         if screvent == "KEY_OK" and scrinput ~= taxicfg.trailer0 then
             terminal.SetJsonValue("iTAXI_CFG","TRAILER0",scrinput)
             taxicfg.trailer0 = scrinput
         end
   elseif screvent == "BUTTONM_2" then
-        scrlines = "LARGE,iTAXI_T,53,2,C;" .."STRING,"..taxicfg.trailer1..",0,6,3,22;".."BUTTONA,THIS,ALPHA ,B,C;"
+        scrlines = "LARGE,iTAXI_T,53,2,C;" .."STRING,"..taxicfg.trailer1..",0,6,3,30;".."BUTTONA,THIS,ALPHA ,B,C;"
         screvent,scrinput = terminal.DisplayObject(scrlines,KEY.CLR+KEY.CNCL+KEY.OK,EVT.TIMEOUT,ScrnTimeout)
         if screvent == "KEY_OK" and scrinput ~= taxicfg.trailer1 then
             terminal.SetJsonValue("iTAXI_CFG","TRAILER1",scrinput)
             taxicfg.trailer1 = scrinput
         end
   elseif screvent == "BUTTONM_3" then
-        scrlines = "LARGE,iTAXI_T,54,2,C;" .."STRING,"..taxicfg.trailer2..",0,6,3,22;".."BUTTONA,THIS,ALPHA ,B,C;"
+        scrlines = "LARGE,iTAXI_T,54,2,C;" .."STRING,"..taxicfg.trailer2..",0,6,3,30;".."BUTTONA,THIS,ALPHA ,B,C;"
         screvent,scrinput = terminal.DisplayObject(scrlines,KEY.CLR+KEY.CNCL+KEY.OK,EVT.TIMEOUT,ScrnTimeout)
         if screvent == "KEY_OK" and scrinput ~= taxicfg.trailer2 then
             terminal.SetJsonValue("iTAXI_CFG","TRAILER2",scrinput)
@@ -786,7 +786,7 @@ function itaxi_totals()
   local rev_exist = config.safsign and string.find(config.safsign,"+")
   local saf_exist = config.safsign and string.find(config.safsign,"*")
   if (saf_exist or rev_exist) then
-    scrlines = "WIDELBL,THIS,"..(rev_exist and "REVERSAL" or "")..(saf_exist and " SAF" or "") ..",2,C,;".."WIDELBL,THIS,PENDING,3,C;"
+    local scrlines = "WIDELBL,THIS,"..(rev_exist and "REVERSAL" or "")..(saf_exist and " SAF" or "") ..",2,C,;".."WIDELBL,THIS,PENDING,3,C;"
     terminal.DisplayObject(scrlines,KEY.OK,EVT.TIMEOUT,2000)
   end
 

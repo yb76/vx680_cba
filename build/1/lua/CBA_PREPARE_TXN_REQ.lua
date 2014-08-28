@@ -61,8 +61,6 @@ function prepare_txn_req()
 	
     table.insert(msg_flds,"22:" .. posentry)
     if txn.chipcard and txn.emv.panseqnum then table.insert(msg_flds,"23:" .. txn.emv.panseqnum) end
-	
-    --if txn.moto then txn.poscc = "08" elseif txn.poscc == nil then txn.poscc = "42" end
     if txn.poscc == nil then txn.poscc = "42" end
     table.insert(msg_flds,"25:" .. txn.poscc)
     if txn.track2 then table.insert(msg_flds,"35:" .. txn.track2)
@@ -146,7 +144,7 @@ function prepare_txn_req()
 	
 	
      terminal.DesStore(txn.cv1,"8", config.key_tmp) 
-     ok = terminal.Owf(config.key_tmp,config.key_kmacs,config.key_kt_x ,0)
+     terminal.Owf(config.key_tmp,config.key_kmacs,config.key_kt_x ,0)
 	 
     table.insert(msg_flds,"64:KEY=" .. config.key_kmacs)
     local as2805msg = terminal.As2805Make( msg_flds)

@@ -39,7 +39,7 @@ function do_obj_idle()
   local scrlines = ""
   local scrlines_sale = "BUTTONL_1,THIS,SALE,8,C;BUTTONL_2,THIS,MENU,11,C;"
   local scrkeys  = KEY.LCLR+KEY.FUNC
-  local screvents = EVT.TIMEOUT+EVT.MCR+EVT.SCT_IN+EVT.CTLS_CARD
+  local screvents = EVT.TIMEOUT+EVT.MCR+EVT.SCT_IN
   local scrtimeout = 30000
   local battlimit = 10
   
@@ -47,13 +47,12 @@ function do_obj_idle()
   local charging,batt = terminal.GetBattery()
 
   if idlescrlines == nil then
-    scrlines = scrlines .."BATTERY,,0,-2,32,;"
-    scrlines = scrlines .."TIMEDISP,,0,-1,0;"
-	scrlines = scrlines .."BUTTONL_1,THIS,SALE,8,C;" 
-	scrlines = scrlines .."BUTTONL_2,THIS,MENU,11,C;"
-	scrlines = scrlines .."BITMAP,THIS,gmcabs_color.bmp,P60,P0;"
-    scrlines = scrlines .."SIGNAL,,0,-2,0;"
-    idlescrlines = scrlines
+    idlescrlines = "BATTERY,,0,-2,32,;"
+    .."TIMEDISP,,0,-1,0;"
+	.."BUTTONL_1,THIS,SALE,8,C;" 
+	.."BUTTONL_2,THIS,MENU,11,C;"
+	.."BITMAP,THIS,gmcabs_color.bmp,P60,P0;"
+    .."SIGNAL,,0,-2,0;"
   end
   
   local topright = ( config.safsign or "") .. ( config.logok  and "" or "L" )
@@ -151,17 +150,6 @@ function init_config()
   KEY.CNCL = 0x800
   KEY.CLR  = 0x1000
   KEY.OK   = 0x2000
-  KEY.ALPHA= 0x4000
-  KEY.SK1  = 0x8000
-  KEY.SK2  = 0x10000
-  KEY.SK3  = 0x20000
-  KEY.SK4  = 0x40000
-  KEY.F0   = 0x80000
-  KEY.F1   = 0x100000
-  KEY.F2   = 0x200000
-  KEY.F3   = 0x400000
-  KEY.F4   = 0x800000
-  KEY.F5   = 0x1000000
   KEY.ASTERISK = 0x2000000
   KEY.LCLR = 0x4000000
   KEY.NO_PIN = 0x8000000
@@ -172,7 +160,6 @@ function init_config()
   EVT.MCR     = 0x08
   EVT.SER_DATA = 0x80
   EVT.SER2_DATA = 0x100
-  EVT.CTLS_CARD = 0x10000
 
   config.model = terminal.Model()
   config.ppid = terminal.Ppid()

@@ -28,7 +28,7 @@ function do_obj_txn_resp()
     if errmsg ~= "NOERROR" then return do_obj_txn_nok(errmsg)  -- as2805 error
     elseif fld39 ~= "00" and fld39 ~= "08" then 
       local HOST_DECLINED = 2
-      if not txn.ctls and txn.chipcard and not txn.emv.fallback and not txn.earlyemv then emvok = terminal.EmvUseHostData(HOST_DECLINED,fld55) end
+      if not txn.ctls and txn.chipcard and not txn.emv.fallback and not txn.earlyemv then terminal.EmvUseHostData(HOST_DECLINED,fld55) end
       return do_obj_txn_nok(errmsg)
     else 
       if txn.time and string.len(txn.time)  == 10 then

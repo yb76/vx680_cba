@@ -99,19 +99,20 @@ end
 function check_logon_ok()
 	if config.logok == true then return true
 	else 
+		local scrlines = ""
 		if config.tid == "" or config.mid == "" then
-			local scrlines = "WIDELBL,,51,2,C;" .. "WIDELBL,,53,4,C;"
+			scrlines = "WIDELBL,,51,2,C;" .. "WIDELBL,,53,4,C;"
 			local screvent,scrinput = terminal.DisplayObject(scrlines,KEY.CNCL+KEY.CLR+KEY.OK,0,0)
 			return false
 		end
 		
-		local scrlines = "WIDELBL,,21,2,C;"
+		scrlines = "WIDELBL,,21,2,C;"
 		terminal.DisplayObject(scrlines,0,0,0)
 		local txnbak = txn
 		txn = {}
 		txn.func = "LGON"
 		txn.finishreturn = true
-	 	local scrlines = "WIDELBL,THIS,LOGON,2,C;" .. "WIDELBL,THIS,PLEASE WAIT,3,C;"
+	 	scrlines = "WIDELBL,THIS,LOGON,2,C;" .. "WIDELBL,THIS,PLEASE WAIT,3,C;"
 		terminal.DisplayObject(scrlines,0,EVT.TIMEOUT,ScrnTimeoutHF)
 		do_obj_logon_start()
 		txn = txnbak
@@ -950,8 +951,6 @@ function prepare_txn_req()
 	
     table.insert(msg_flds,"22:" .. posentry)
     if txn.chipcard and txn.emv.panseqnum then table.insert(msg_flds,"23:" .. txn.emv.panseqnum) end
-	
-    --if txn.moto then txn.poscc = "08" elseif txn.poscc == nil then txn.poscc = "42" end
     if txn.poscc == nil then txn.poscc = "42" end
     table.insert(msg_flds,"25:" .. txn.poscc)
     if txn.track2 then table.insert(msg_flds,"35:" .. txn.track2)
@@ -1035,7 +1034,7 @@ function prepare_txn_req()
 	
 	
      terminal.DesStore(txn.cv1,"8", config.key_tmp) 
-     ok = terminal.Owf(config.key_tmp,config.key_kmacs,config.key_kt_x ,0)
+     terminal.Owf(config.key_tmp,config.key_kmacs,config.key_kt_x ,0)
 	 
     table.insert(msg_flds,"64:KEY=" .. config.key_kmacs)
     local as2805msg = terminal.As2805Make( msg_flds)
@@ -1115,7 +1114,7 @@ function do_obj_txn_resp()
     if errmsg ~= "NOERROR" then return do_obj_txn_nok(errmsg)  -- as2805 error
     elseif fld39 ~= "00" and fld39 ~= "08" then 
       local HOST_DECLINED = 2
-      if not txn.ctls and txn.chipcard and not txn.emv.fallback and not txn.earlyemv then emvok = terminal.EmvUseHostData(HOST_DECLINED,fld55) end
+      if not txn.ctls and txn.chipcard and not txn.emv.fallback and not txn.earlyemv then terminal.EmvUseHostData(HOST_DECLINED,fld55) end
       return do_obj_txn_nok(errmsg)
     else 
       if txn.time and string.len(txn.time)  == 10 then
@@ -1625,6 +1624,7 @@ function tcpsend(msg)
   if config.stan == nil or config.stan == "" or tonumber(config.stan) >= 999999 then config.stan = "000001"
   else config.stan = string.format("%06d",tonumber(config.stan) + 1) end
   terminal.SetJsonValue("CONFIG","STAN",config.stan)
+  local mti = string.sub(msg,1,4)
   if mti ~= "9820" then -- keep MAC residue X
 	local macvalue = string.sub(msg,-16)
 	terminal.SetIvMode("0")
@@ -1836,6 +1836,7 @@ function do_obj_txn_finish(nosaf)
   terminal.FileRemove("REV_TODO")
   if txn.finishreturn then return txn.finishreturn
   else
+    terminal.TcpDisconnect()
     terminal.EmvResetGlobal()
     if txn.chipcard and terminal.EmvIsCardPresent() and not (ecrd and ecrd.RETURN) then
       terminal.EmvPowerOff()
@@ -2143,6 +2144,7 @@ function prep_txnroc()
 end
 
 function funckeymenu()
+  require ("CBACONFIG")
   local scrlines = ",,40,2,C;" .. "LHIDDEN,,0,5,17,8;"					   
   local screvent,scrinput = terminal.DisplayObject(scrlines,KEY.CNCL+KEY.CLR+KEY.OK,EVT.TIMEOUT,ScrnTimeout)
 
@@ -2150,10 +2152,8 @@ function funckeymenu()
     return do_obj_txn_finish()
   elseif screvent == "KEY_OK" then
     if scrinput == "7410" then
-      require ("CBACONFIG")
       return do_obj_termconfig()
     elseif scrinput == "3824" then
-      require ("CBACONFIG")
       return do_obj_termconfig_maintain()
     elseif scrinput == "5295" then
 	  if config.tid == "" or config.mid == "" then
@@ -2175,7 +2175,7 @@ function funckeymenu()
     elseif scrinput == "00200200" then
 	  return do_obj_txn_reset_memory()
 	elseif scrinput == "1982" then
-	  terminal.vPrintEMVAllAids()
+	  terminal.CTLSEmvGetCfg()
 	  return do_obj_txn_finish()
     else return do_obj_txn_finish()
     end
@@ -2220,7 +2220,7 @@ function do_obj_print_saf()
 
 		local fname = "REVERSAL"
 		if terminal.FileExist(fname..revmin) then
-			local roc = terminal.GetJsonValue(fname..i,"ROC")
+			local roc = terminal.GetJsonValue(fname..revmin,"ROC")
 			prtvalue = prtvalue .."\\3REVERSAL".."\\R"..roc.."\\n"
 		end
 
@@ -2241,6 +2241,7 @@ function do_obj_txn_reset_memory()
   local scrlines = "WIDELBL,THIS,RESET MEMORY?,2,C;".."WIDELBL,,73,3,C;"
   local screvent,_=terminal.DisplayObject(scrlines,KEY.CNCL+KEY.CLR+KEY.OK,EVT.TIMEOUT,ScrnTimeout)
   if screvent == "KEY_OK" then 
+	local fmax,fmin = 0,0
 	local scrlines = "WIDELBL,,27,2,C;" .."WIDELBL,,26,4,C;"
 	terminal.DisplayObject(scrlines,0,0,ScrnTimeoutZO)
 	terminal.SetJsonValue("CONFIG","BATCHNO", "000000")
@@ -2328,7 +2329,6 @@ function swipecheck(track2)
 		terminal.DisplayObject(scrlines1,KEY.CNCL,EVT.TIMEOUT,ScrnErrTimeout)
 		return -1
   end
-
 
   local expirydate = (panetc and string.sub(panetc,1,4) or "")
   local currmonth = terminal.Time( "YYMM") 

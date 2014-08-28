@@ -8,7 +8,7 @@ function itaxi_totals()
   local rev_exist = config.safsign and string.find(config.safsign,"+")
   local saf_exist = config.safsign and string.find(config.safsign,"*")
   if (saf_exist or rev_exist) then
-    scrlines = "WIDELBL,THIS,"..(rev_exist and "REVERSAL" or "")..(saf_exist and " SAF" or "") ..",2,C,;".."WIDELBL,THIS,PENDING,3,C;"
+    local scrlines = "WIDELBL,THIS,"..(rev_exist and "REVERSAL" or "")..(saf_exist and " SAF" or "") ..",2,C,;".."WIDELBL,THIS,PENDING,3,C;"
     terminal.DisplayObject(scrlines,KEY.OK,EVT.TIMEOUT,2000)
   end
 
