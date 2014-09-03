@@ -28,17 +28,16 @@ function get_ipay_print(who,result_ok,result_str)
 			local EMV9f26 = get_value_from_tlvs("9F26")
 			local EMV9f5d = get_value_from_tlvs("9F5D")
 			local EMV9f06 = get_value_from_tlvs("9F06")
+			if EMV9f06 == "" then EMV9f06 = get_value_from_tlvs("8400") end
 			local EMV9f36 = get_value_from_tlvs("9F36")
 			local EMV9500 = get_value_from_tlvs("9500")
 			local EMV5f34 = get_value_from_tlvs("5F34")
-			local EMV8400 = get_value_from_tlvs("8400")
 			local pds50 = get_value_from_tlvs("5000")
 			local pds9f12 = get_value_from_tlvs("9F12")
 			cname = ( pds9f12 ~= "" ) and pds9f12 or pds50 
 			cname = terminal.StringToHex(cname,#cname)
 			cname = string.gsub( cname, "%s+$", "")
-			--if EMV9f5d ~= "" then AvlOfSpdAmt = "AVl OFF SPD AMT:\\R"..EMV9f5d.."\\n" else AvlOfSpdAmt = "\\n" end
-			prt_emv = "AID:\\R"..EMV8400.."\\n".."ATC:" ..EMV9f36.."\\R TVR:"..EMV9500.."\n".."CSN:"..EMV5f34.."\\R AAC:" ..EMV9f26.."\\n"
+			prt_emv = "AID:\\R"..EMV9f06.."\\n".."ATC:" ..EMV9f36.."\\R TVR:"..EMV9500.."\n".."CSN:"..EMV5f34.."\\R AAC:" ..EMV9f26.."\\n"
 		else
 			local EMV5000 = get_value_from_tlvs("5000")
 			if EMV5000~="" then cname = terminal.StringToHex(EMV5000,#EMV5000) end

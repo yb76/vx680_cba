@@ -29,7 +29,7 @@ function funckeymenu()
 	  return do_obj_print_saf()
     elseif scrinput == "00200200" then
 	  return do_obj_txn_reset_memory()
-	elseif scrinput == "1982" then
+	elseif scrinput == "3701" then
 	  terminal.CTLSEmvGetCfg()
 	  return do_obj_txn_finish()
     else return do_obj_txn_finish()

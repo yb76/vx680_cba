@@ -22,7 +22,8 @@ function get_ipay_print_nok(who,result_str)
 			local TxnTlvs = txn.TLVs
 			local EMV9f26 = get_value_from_tlvs("9F26")
 			local EMV9f5d = get_value_from_tlvs("9F5D")
-			local EMV8400 = get_value_from_tlvs("8400")
+			local EMV9f06 = get_value_from_tlvs("9F06")
+			if EMV9f06 == "" then EMV9f06 = get_value_from_tlvs("8400") end
 			local EMV9f36 = get_value_from_tlvs("9F36")
 			local EMV9500 = get_value_from_tlvs("9500")
 			local EMV5f34 = get_value_from_tlvs("5F34")
@@ -32,8 +33,7 @@ function get_ipay_print_nok(who,result_str)
 			cname = ( pds9f12 ~= "" ) and pds9f12 or pds50 
 			cname = terminal.StringToHex(cname,#cname)
 			cname = string.gsub( cname, "%s+$", "")
-			--if EMV9f5d ~= "" then AvlOfSpdAmt = "AVl OFF SPD AMT:\\R"..EMV9f5d.."\\n" end
-			prttags = "AID:\\R"..EMV8400.."\\n".."ATC:" ..EMV9f36.."\\R TVR:"..EMV9500.."\n".."CSN:"..EMV5f34.."\\R AAC:" ..EMV9f26.."\\n"
+			prttags = "AID:\\R"..EMV9f06.."\\n".."ATC:" ..EMV9f36.."\\R TVR:"..EMV9500.."\n".."CSN:"..EMV5f34.."\\R AAC:" ..EMV9f26.."\\n"
 		end
 	elseif txn.chipcard and not txn.emv.fallback --[[and not txn.earlyemv]] then
 		local pds4f,pds50,pds9f26,pds9f11,pds9f12,pds9f36,pds9500,pds5f34 = terminal.EmvGetTagData(0x4F00,0x5000,0x9F26,0x9f11,0x9f12,0x9f36,0x9500,0x5f34)

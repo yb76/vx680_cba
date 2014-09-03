@@ -8,6 +8,7 @@ function get_emv_print_tags(debugprint)
 	local f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00
 	if txn.ctls and txn.chipcard then
 			local f9f06 = get_value_from_tlvs("9F06")
+			if f9f06 == "" then f9f06 = get_value_from_tlvs("8400") end
 			f9f27 = get_value_from_tlvs("9F27")
 			f9f10 = get_value_from_tlvs("9F10")
 			f9f37 = get_value_from_tlvs("9F37")
