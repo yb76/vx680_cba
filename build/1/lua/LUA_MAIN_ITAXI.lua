@@ -36,14 +36,14 @@ require("ITAXI_ITAXI_REPRINT_DO")
 require("ITAXI_ITAXI_RETOTAL_NO_BATCH")
 require("ITAXI_ITAXI_RETOTAL")
 require("ITAXI_ITAXI_TOTALS")
-require("ITAXI_DO_SUBOBJ_ITAXI_UPDATE")
+require("ITAXI_ITAXI_UPDATE")
 require("ITAXI_ITAXI_TOTALS_NOT")
 require("ITAXI_ITAXI_TOTALS_DONE")
-require("ITAXI_GET_ITAXI_PRINT")
-require("ITAXI_INIT_TAXI_CFG")
-init_taxi_cfg()
-callback.sk1_func = itaxi_fmenu
-callback.sk2_func = itaxi_swipe_insert
+require("ITAXI_ITAXI_GET_PRINT")
+require("ITAXI_ITAXI_INIT_CFG")
+itaxi_init_cfg()
+callback.sk1_func = itaxi_swipe_insert
+callback.sk2_func = itaxi_fmenu
 callback.mcr_func = itaxi_swipe_insert
 callback.chip_func = itaxi_swipe_insert
 itaxi_startup()

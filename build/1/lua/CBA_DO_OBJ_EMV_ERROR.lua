@@ -9,9 +9,7 @@ function do_obj_emv_error(emvstat)
 	screvents = EVT.SCT_OUT 
 	scrkeys = 0
   end
-  if gemv_techfallback and emvstat == 146 then
-	  txn.emverr = emvstat
-  elseif gemv_techfallback and not txn.emv_retry then txn.emv_retry = true
+  if gemv_techfallback and not txn.emv_retry then txn.emv_retry = true
     linestr = "WIDELBL,THIS,PLEASE RETRY,4,C;"; txn.emv.fallback = false
   elseif gemv_techfallback then 
 	  txn.emv.fallback = true;linestr = "WIDELBL,THIS,USE FALLBACK,4,C;" 
@@ -29,11 +27,10 @@ function do_obj_emv_error(emvstat)
   elseif emvstat==116 then scrlines="WIDELBL,,120,2,C;"..linestr
   elseif emvstat==118 then scrlines="WIDELBL,,275,2,C;".."WIDELBL,,274,4,C;"..linestr
   elseif emvstat==125 then scrlines="WIDELBL,,285,2,C;"..linestr
-  elseif emvstat==146 then 
   else scrlines="WIDELBL,,276,2,C;"..linestr
   end
   terminal.ErrorBeep()
-  if emvstat~=146 then terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnErrTimeout) end
+  terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnErrTimeout)
   if gemv_techfallback then return do_obj_swipecard()
   else return do_obj_txn_finish() end 
 end

@@ -4,7 +4,7 @@ function itaxi_pay_do()
   if taxi.otherchg and taxi.otherchg > 0 then otherchgstr = "OTHR CHRGS:\\R".. string.format("$%.2f",taxi.otherchg/100) .."\\n" end
   ecrd.POO = "YES"; ecrd.TRACK = "YES"; ecrd.AMT = taxi.subtotal + taxi.serv_gst
   ecrd.KEEP = taxi.subtotal; ecrd.FUNCTION = "PRCH" ; ecrd.TIMER = ""
-  ecrd.HEADER,ecrd.MTRAILER,ecrd.CTRAILER = get_itaxi_print()
+  ecrd.HEADER,ecrd.MTRAILER,ecrd.CTRAILER = itaxi_get_print()
   local abn_str = taxicfg.abn_no and (taxi.subtotal+taxi.serv_gst > 7500 or taxi.subtotal+taxi.serv_gst<=7500 and not taxicfg.abn_skip) and ( "DRVR ABN:\\R" .. taxicfg.abn_no .."\\n" ) or ""
   ecrd.HEADER_OK = "\\f\\W\\CTAX INVOICE\\n" .. "\\fINV#:\\R"..taxicfg.inv.."\\n" ..
     "\\fDRIVER NO:\\R" .. (taxicfg.auth_no or "") .. "\\n" ..

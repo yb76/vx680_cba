@@ -1,17 +1,4 @@
---[[
 
-Change Log:
-2012/07/30-Anand Rai-Add change log and comment dead code.
-2012/08/01-Dwarika Pandey- Added Auto logon At the time of reboot the device.
-2012/08/01-Anand Rai, Dwarika pandey - Verify and Modify Screen timeout.
-2012/08/03-Anand Rai, Dwarika pandey - Verify and Modify Screen timeout.
-2012/08/03-Bo Yang - change screen as per doc V1.9 .
-2012/09/22-Dwarika -- changes in idle() to fix bug id 3330 amd 3344 from bash report by CBA
-2012/09/22-Dwarika -- Tip disable to fix bug id 3333 from bash report by CBA
-2012/09/24-Dwarika -- Software check after logon BUG ID 3341 from bash report by CBA
-2012/09/25-Dwarika -- Changes for Infinite logon BUG ID 3355 $ 3356 from bash report by CBA
-
-]]
 ScrnTimeout = 30000
 ScrnErrTimeout = 10000
 ScrnTimeoutZO = 0
@@ -89,10 +76,10 @@ function do_obj_idle()
   elseif screvent == "KEY_FUNC" then
     if callback.func_func then return callback.func_func()
     else return do_obj_idle() end
-  elseif screvent == "BUTTONL_2" then
+  elseif screvent == "BUTTONL_1" then
     if callback.sk1_func then return callback.sk1_func()
     else return do_obj_idle() end
-  elseif screvent == "BUTTONL_1" then
+  elseif screvent == "BUTTONL_2" then
     if callback.sk2_func then return callback.sk2_func()
     else return do_obj_idle() end
   elseif screvent == "KEY_LCLR" then

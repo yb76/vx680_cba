@@ -342,7 +342,7 @@ function itaxi_pay()
           if taxi.otherchg > 0 then otherchgstr = "OTHR CHRGS:\\R".. string.format("$%.2f",taxi.otherchg/100) .."\\n" end
           local auth_no,abn_no,taxi_no =  taxicfg.auth_no,taxicfg.abn_no,taxicfg.taxi_no
 		  local abn_str = abn_no and (taxi.subtotal > 7500 or taxi.subtotal<=7500 and not taxicfg.abn_skip) and ( "DRVR ABN:\\R" .. abn_no .."\\n" ) or ""
-          local header,mtrailer,ctrailer = get_itaxi_print()
+          local header,mtrailer,ctrailer = itaxi_get_print()
 
           local prtvalue= header .. "\\CCASH RECEIPT\\n" ..
             "\\4\\w------------------------------------------\\n" ..
@@ -417,7 +417,7 @@ function itaxi_pay_do()
   if taxi.otherchg and taxi.otherchg > 0 then otherchgstr = "OTHR CHRGS:\\R".. string.format("$%.2f",taxi.otherchg/100) .."\\n" end
   ecrd.POO = "YES"; ecrd.TRACK = "YES"; ecrd.AMT = taxi.subtotal + taxi.serv_gst
   ecrd.KEEP = taxi.subtotal; ecrd.FUNCTION = "PRCH" ; ecrd.TIMER = ""
-  ecrd.HEADER,ecrd.MTRAILER,ecrd.CTRAILER = get_itaxi_print()
+  ecrd.HEADER,ecrd.MTRAILER,ecrd.CTRAILER = itaxi_get_print()
   local abn_str = taxicfg.abn_no and (taxi.subtotal+taxi.serv_gst > 7500 or taxi.subtotal+taxi.serv_gst<=7500 and not taxicfg.abn_skip) and ( "DRVR ABN:\\R" .. taxicfg.abn_no .."\\n" ) or ""
   ecrd.HEADER_OK = "\\f\\W\\CTAX INVOICE\\n" .. "\\fINV#:\\R"..taxicfg.inv.."\\n" ..
     "\\fDRIVER NO:\\R" .. (taxicfg.auth_no or "") .. "\\n" ..
@@ -775,7 +775,6 @@ function itaxi_retotal(fileno)
     end
 end
 
-
 function itaxi_totals()
   local header,trailer = "","\\n\\4\\W\\iINV No.\\RFARE\\n\\4\\W"
   local taxi_min,taxi_next= terminal.GetArrayRange("TAXI")
@@ -870,7 +869,7 @@ function itaxi_totals()
   end
 end
 
-function do_subobj_itaxi_update()
+function itaxi_update()
   local idx , upmsg,upload_ok = 0, "",true
   local scrlines = "WIDELBL,THIS,UPDATE,3,C;".."WIDELBL,THIS,IN PROGRESS,4,C;"..",THIS,**PLEASE WAIT**,7,C"
   local screvent,_=terminal.DisplayObject(scrlines,0,0,0)
@@ -938,16 +937,16 @@ function itaxi_totals_done()
   local shftstr = jsontable2string (SHFT)
   terminal.NewObject(shft_nextfile,shftstr)
   ecrd ={}
-  do_subobj_itaxi_update()
+  itaxi_update()
   do_obj_gprs_register()
   return itaxi_sign_on()
 end
 
-function get_itaxi_print()
+function itaxi_get_print()
   return taxicfg.header,taxicfg.mtrailer,taxicfg.ctrailer
 end
 
-function init_taxi_cfg()
+function itaxi_init_cfg()
   taxicfg.header0,taxicfg.header1,taxicfg.trailer0,taxicfg.trailer1,taxicfg.trailer2,taxicfg.trailer3,taxicfg.abn_no,taxicfg.abn,taxicfg.taxi_no,taxicfg.auth_no,taxicfg.inv,taxicfg.last_inv,taxicfg.batch= 
   terminal.GetJsonValue("iTAXI_CFG","HEADER0","HEADER1","TRAILER0","TRAILER1","TRAILER2","TRAILER3","ABN_NO","ABN","TAXI_NO","AUTH_NO","INV","LAST_INV","BATCH")
   taxicfg.comm,taxicfg.serv_gst,taxicfg.day,taxicfg.month,taxicfg.daily,taxicfg.monthly,taxicfg.day_limit,taxicfg.month_limit,taxicfg.ctls_slimit =terminal.GetJsonValueInt("iTAXI_CFG","COMM","SERV_GST","DAY","MONTH","DAILY","MONTHLY","DAY_LIMIT","MONTH_LIMIT","CTLS_S_LIMIT")
@@ -962,9 +961,9 @@ function init_taxi_cfg()
   
 end
 
-init_taxi_cfg()
-callback.sk1_func = itaxi_fmenu
-callback.sk2_func = itaxi_swipe_insert
+itaxi_init_cfg()
+callback.sk1_func = itaxi_swipe_insert
+callback.sk2_func = itaxi_fmenu
 callback.mcr_func = itaxi_swipe_insert
 callback.chip_func = itaxi_swipe_insert
 itaxi_startup()

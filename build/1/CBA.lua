@@ -515,7 +515,6 @@ function get_trans_cv2(trk2_pan)
 end
 
 function do_obj_account()
-  if txn.emverr and txn.emverr == 146 then txn.chipcard = nil ; txn.emv.fallback = false; txn.emv = {} end
   local acc4 = "CHQ"
   local acc5 = "SAV"
   local acc6 = "CR"
@@ -941,7 +940,7 @@ function prepare_txn_req()
 			txn.offlinepin = true 
 		end 
 	end
-	if txn.moto and false then --TEST
+	if txn.moto then
 		posentry = posentry .."2"
 	elseif txn.chipcard and txn.offlinepin then
 	    posentry = posentry .. "9"
@@ -1228,7 +1227,7 @@ function do_obj_txn_sig()
   	local scrlines_card = "WIDELBL,THIS,REMOVE CARD,2,C;".."WIDELBL,THIS,CHECK SIGNATURE,3,C;"
 	terminal.DisplayObject(scrlines_card,0,EVT.SCT_OUT+EVT.TIMEOUT,15000)
   end
-  local screvent,_ = terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,120000)--AR Timeout
+  local screvent,_ = terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,120000)
   if screvent =="BUTTONS_1" or screvent =="KEY_OK" or screvent =="TIME" then
   	terminal.DisplayObject("WIDELBL,THIS,SIGNATURE APPROVED,3,C;",KEY.OK,EVT.TIMEOUT,2000)
 	if screvent == "TIME" then terminal.ErrorBeep() end
@@ -1236,7 +1235,7 @@ function do_obj_txn_sig()
   elseif screvent =="BUTTONS_2" or screvent =="CANCEL" then
 	  local scrlines = "WIDELBL,THIS,WARNING,2,C;" .."TEXT,THIS,YOU ARE ABOUT TO,4,C;"..
 	  "TEXT,THIS,DECLINE THIS FARE.,5,C;".."TEXT,THIS,DO YOU WANT TO,6,C;".."TEXT,THIS,CANCEL PAYMENT,7,C;".."BUTTONS_1,THIS,YES,10,10;".. "BUTTONS_2,THIS,NO,10,33;"
-	  local screvent,_ = terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,300000)--AR Timeout
+	  local screvent,_ = terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,300000)
 	  if screvent == "BUTTONS_1" or screvent == "KEY_OK" or screvent == "TIME" then
 		if txn.tcpsent then  --not completion offline
 			local safmin,safnext = terminal.GetArrayRange("REVERSAL")
@@ -1318,23 +1317,34 @@ function copy_txn_to_saf()
 end
 
 function do_obj_txn_nok(tcperrmsg)
-  local errcode,errmsg= "",""
+  local errcode,errmsg,errline2 = "","",""
   if not txn.rc then txn.rc = "W21" end
   if txn.tcperror then errcode,errmsg = tcperrorcode(tcperrmsg),tcperrmsg 
-  else errcode,errmsg = txn.rc,txn.rc_desc or ""
+  else errcode,errmsg = txn.rc, ""
     local rc = txn.rc
 	if string.sub(txn.rc,1,1)~="Z" then rc = "H"..rc end
     errmsg = cba_errorcode(rc)
   end
+  local evt,itimeout = EVT.TIMEOUT, ScrnTimeoutHF
+  if txn.ctls and txn.rc == "65" then 
+	errline2 = "WIDELBL,THIS,PLEASE INSERT CARD,4,C;"
+	evt = EVT.SCT_IN+EVT.TIMEOUT
+	itimeout = 15000
+  end
   
   local scrlines = "WIDELBL,,120,2,C;"
-  scrlines = scrlines.. "WIDELBL,THIS," .. (errmsg or "") ..",4,C;"
+  scrlines = scrlines.. "WIDELBL,THIS," .. (errmsg or "") ..",4,C;"..errline2
   terminal.ErrorBeep()
-  terminal.DisplayObject(scrlines,0,EVT.TIMEOUT,ScrnTimeoutHF)
+  local screvent =terminal.DisplayObject(scrlines,KEY.CLR+KEY.CNCL+KEY.OK,evt,itimeout)
   if txn.rc and txn.rc == "98" then config.logok = false
 	do_obj_txn_nok_print(errcode,errmsg,1)  
 	check_logon_ok() 
 	return do_obj_txn_finish()
+  elseif screvent == "CHIP_CARD_IN" then 
+  	do_obj_txn_nok_print(errcode,errmsg,1)
+	terminal.FileRemove("TXN_REQ")
+	terminal.FileRemove("REV_TODO")
+    return do_obj_idle()
   else return do_obj_txn_nok_print(errcode,errmsg)
   end
 end
@@ -1582,9 +1592,7 @@ function do_obj_emv_error(emvstat)
 	screvents = EVT.SCT_OUT 
 	scrkeys = 0
   end
-  if gemv_techfallback and emvstat == 146 then
-	  txn.emverr = emvstat
-  elseif gemv_techfallback and not txn.emv_retry then txn.emv_retry = true
+  if gemv_techfallback and not txn.emv_retry then txn.emv_retry = true
     linestr = "WIDELBL,THIS,PLEASE RETRY,4,C;"; txn.emv.fallback = false
   elseif gemv_techfallback then 
 	  txn.emv.fallback = true;linestr = "WIDELBL,THIS,USE FALLBACK,4,C;" 
@@ -1602,11 +1610,10 @@ function do_obj_emv_error(emvstat)
   elseif emvstat==116 then scrlines="WIDELBL,,120,2,C;"..linestr
   elseif emvstat==118 then scrlines="WIDELBL,,275,2,C;".."WIDELBL,,274,4,C;"..linestr
   elseif emvstat==125 then scrlines="WIDELBL,,285,2,C;"..linestr
-  elseif emvstat==146 then 
   else scrlines="WIDELBL,,276,2,C;"..linestr
   end
   terminal.ErrorBeep()
-  if emvstat~=146 then terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnErrTimeout) end
+  terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnErrTimeout)
   if gemv_techfallback then return do_obj_swipecard()
   else return do_obj_txn_finish() end 
 end
@@ -1714,7 +1721,6 @@ function tcperrorcode(errmsg)
   pstnerr_t["REVERSAL PENDING"] = "W32"
   return(pstnerr_t[errmsg])
 end
-
 
 function cba_errorcode(errcode)
   local cbaerr_t = { 

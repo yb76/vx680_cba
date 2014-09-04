@@ -13,7 +13,7 @@ function itaxi_totals_done()
   local shftstr = jsontable2string (SHFT)
   terminal.NewObject(shft_nextfile,shftstr)
   ecrd ={}
-  do_subobj_itaxi_update()
+  itaxi_update()
   do_obj_gprs_register()
   return itaxi_sign_on()
 end

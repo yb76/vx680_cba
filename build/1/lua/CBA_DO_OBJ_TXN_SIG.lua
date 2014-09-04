@@ -4,7 +4,7 @@ function do_obj_txn_sig()
   	local scrlines_card = "WIDELBL,THIS,REMOVE CARD,2,C;".."WIDELBL,THIS,CHECK SIGNATURE,3,C;"
 	terminal.DisplayObject(scrlines_card,0,EVT.SCT_OUT+EVT.TIMEOUT,15000)
   end
-  local screvent,_ = terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,120000)--AR Timeout
+  local screvent,_ = terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,120000)
   if screvent =="BUTTONS_1" or screvent =="KEY_OK" or screvent =="TIME" then
   	terminal.DisplayObject("WIDELBL,THIS,SIGNATURE APPROVED,3,C;",KEY.OK,EVT.TIMEOUT,2000)
 	if screvent == "TIME" then terminal.ErrorBeep() end
@@ -12,7 +12,7 @@ function do_obj_txn_sig()
   elseif screvent =="BUTTONS_2" or screvent =="CANCEL" then
 	  local scrlines = "WIDELBL,THIS,WARNING,2,C;" .."TEXT,THIS,YOU ARE ABOUT TO,4,C;"..
 	  "TEXT,THIS,DECLINE THIS FARE.,5,C;".."TEXT,THIS,DO YOU WANT TO,6,C;".."TEXT,THIS,CANCEL PAYMENT,7,C;".."BUTTONS_1,THIS,YES,10,10;".. "BUTTONS_2,THIS,NO,10,33;"
-	  local screvent,_ = terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,300000)--AR Timeout
+	  local screvent,_ = terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,300000)
 	  if screvent == "BUTTONS_1" or screvent == "KEY_OK" or screvent == "TIME" then
 		if txn.tcpsent then  --not completion offline
 			local safmin,safnext = terminal.GetArrayRange("REVERSAL")
