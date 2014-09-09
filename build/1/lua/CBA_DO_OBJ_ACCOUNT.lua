@@ -8,6 +8,7 @@ function do_obj_account()
   local screvents = EVT.TIMEOUT+EVT.SCT_OUT
   txn.account = ""
   local ok,desc = get_cardinfo()
+  terminal.DebugDisp("boyang acc...1")
  
   if not ok then
 	return do_obj_txn_nok(desc)

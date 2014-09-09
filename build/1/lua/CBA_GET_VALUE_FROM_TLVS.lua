@@ -9,6 +9,10 @@ function get_value_from_tlvs(tag,tlvs_s)
 		while idx < #tlvs do
 			local chktag = string.sub(tlvs,idx,idx+3)
 			idx = idx + 4
+			if chktag == "LEN6" then
+				chktag = string.sub(tlvs,idx,idx+5)
+				idx = idx + 6
+			end
 			tlen = tonumber( "0x"..( string.sub(tlvs,idx,idx+1) or "00"))
 			idx = idx + 2
 			value = string.sub(tlvs,idx,idx+tlen*2-1)

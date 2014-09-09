@@ -173,5 +173,5 @@ end
 init_config()
 terminal.DoTmsCmd()
 load_apps()
-check_logon_ok()
+--check_logon_ok()
 do_obj_idle()

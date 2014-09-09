@@ -1,4 +1,5 @@
 function do_obj_txn_ok()
+terminal.DebugDisp("boyang txnok")
     local signflag = ( not ( txn.ctls and txn.chipcard) and txn.pinblock_flag == "NOPIN" or txn.ctlsPin == "1" or txn.ctlsPin == "3" or ( txn.rc == "08" or (txn.chipcard and terminal.EmvGlobal("GET","SIGN")) or txn.pan) and not txn.moto)
 	local scrlines,resultstr = "",""
 	scrlines =  "WIDELBL,,30,2,C;" .."WIDELBL,,147,4,C;" 

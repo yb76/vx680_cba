@@ -7,8 +7,9 @@ function tcpsend(msg)
   else config.stan = string.format("%06d",tonumber(config.stan) + 1) end
   terminal.SetJsonValue("CONFIG","STAN",config.stan)
   local mti = string.sub(msg,1,4)
-  if mti ~= "9820" then -- keep MAC residue X
+  if true or mti ~= "9820" then -- keep MAC residue X
 	local macvalue = string.sub(msg,-16)
+	terminal.DebugDisp("msg = "..msg)
 	terminal.SetIvMode("0")
 	config.mab_send = macvalue ..terminal.Enc (macvalue,"","16",config.key_kmacs)
   end

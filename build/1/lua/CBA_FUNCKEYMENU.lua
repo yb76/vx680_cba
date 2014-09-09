@@ -23,6 +23,8 @@ function funckeymenu()
       return do_obj_logon_init()
     elseif scrinput == "00100100" then
        return do_obj_swdownload()
+	elseif scrinput == "5620" then
+	  return do_obj_clear_saf()
 	elseif scrinput == "5628" then
 	  return do_obj_upload_saf()
     elseif scrinput == "5629" then

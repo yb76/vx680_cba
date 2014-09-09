@@ -446,8 +446,9 @@ function get_cardinfo()
 			local tag9f66_2 = tonumber(string.sub( EMV9F66,3,4),16)
 			local tag9f6c_1 = #EMV9F6C>0 and tonumber(string.sub( EMV9F6C,1,2),16) or 0
 			local tag9f6c_2 = #EMV9F6C>0 and tonumber(string.sub( EMV9F6C,3,4),16) or 0
+			
 			local pinflag = hasbit(tag9f6c_1,bit(8)) 
-			local signflag = hasbit(tag9f6c_1,bit(7)) or (txn.totalamt >= txn.cvmlimit and EMV9F6C =="")
+			local signflag = hasbit(tag9f6c_1,bit(7)) or (--[[txn.totalamt >= txn.cvmlimit and]] EMV9F6C =="") --boyang TESTING
 			if pinflag or signflag then
 				if pinflag and config.no_pin then
 					txn.rc = "W31"
@@ -801,7 +802,7 @@ function do_obj_saf_rev_start(nextstep,mode)
 	local saf_sent,rev_sent = false,false
 	local ok = true
 	if (not mode or mode == "REVERSAL") and rev_exist then 
-		rev_sent = do_obj_saf_rev_send("REVERSAL") 
+		rev_sent = do_obj_saf_rev_send("REVERSAL")
 		if(not rev_sent) then ok = false end
 	end
 	if (not mode or mode == "SAF") and saf_exist and ok then saf_sent = do_obj_saf_rev_send("SAF") end
@@ -861,7 +862,7 @@ function do_obj_saf_rev_send(fname)
 		terminal.Owf(config.key_tmp,config.key_kmacs,config.key_kt_x ,0)
 
         local as2805msg = terminal.As2805Make(msg_flds)
-		if sent == "YES" then as2805msg = string.sub(as2805msg,1,3).."1"..string.sub(as2805msg,5) end
+		if sent == "YES" then as2805msg = string.sub(as2805msg,1,3).."1"..string.sub(as2805msg,5) end 
 		retmsg = tcpconnect() 
         if retmsg == "NOERROR" and as2805msg ~= "" then retmsg = tcpsend(as2805msg) end
 		terminal.SetJsonValue(saffile,"SENT","YES")
@@ -873,7 +874,7 @@ function do_obj_saf_rev_send(fname)
         local msg_t = { "GET,12","GET,13", "GET,15","IGN,24","GETS,39","GETS,44","GETS,47","GETS,48","GETS,64" }
         if as2805msg ~= "" then
 		  errmsg,fld12,fld13,fld15,fld39,fld44,fld47,fld48,fld55,fld64 = terminal.As2805Break( as2805msg, msg_t )
-		  if fld39 == "98" then  config.logok = false ; check_logon_ok() end	
+		  if fld39 == "98" then config.logok = false ; check_logon_ok() end	
           if fld39 ~= "00" and fld39 ~= "21" then break end
           terminal.FileRemove(fname..i)
           terminal.SetArrayRange(fname,tostring(i+1),"")
@@ -1632,7 +1633,7 @@ function tcpsend(msg)
   else config.stan = string.format("%06d",tonumber(config.stan) + 1) end
   terminal.SetJsonValue("CONFIG","STAN",config.stan)
   local mti = string.sub(msg,1,4)
-  if mti ~= "9820" then -- keep MAC residue X
+  if true or mti ~= "9820" then -- keep MAC residue X
 	local macvalue = string.sub(msg,-16)
 	terminal.SetIvMode("0")
 	config.mab_send = macvalue ..terminal.Enc (macvalue,"","16",config.key_kmacs)
@@ -1666,6 +1667,8 @@ end
 function mac_check(rcvmsg)
 	local data_nomac = string.sub(rcvmsg,1,#rcvmsg-16)
 	local data_mac = string.sub(rcvmsg,-16)
+	debugPrint(data_nomac)
+	debugPrint(data_mac)
 	local macr_x = string.sub(config.mab_send,-16)
 	local macr_y = string.sub(config.mab_recv,-16)
 	local mti2,mti3 = string.sub(rcvmsg,1,2),string.sub(rcvmsg,1,3)
@@ -1704,6 +1707,7 @@ function mac_check(rcvmsg)
 		return true
 	else
 		--return false
+		terminal.DebugDisp("boyang...mac error ["..data_mac.."] != "..chkmac)
 		return true --workaround
 	end
 end
@@ -1850,6 +1854,7 @@ function do_obj_txn_finish(nosaf)
       local scrlines = "WIDELBL,,286,2,C;"
       terminal.DisplayObject(scrlines,0,EVT.SCT_OUT,ScrnTimeoutZO)
 	end
+	terminal.DebugDisp("boyang finish...."..(ecrd.RETURN and "return" or "idle"))
 	local nextstep = ( ecrd.RETURN or do_obj_idle )
 	saf_rev_check()
 	if nosaf or txn.rc == "Y3" then 
@@ -2129,6 +2134,10 @@ function get_value_from_tlvs(tag,tlvs_s)
 		while idx < #tlvs do
 			local chktag = string.sub(tlvs,idx,idx+3)
 			idx = idx + 4
+			if chktag == "LEN6" then
+				chktag = string.sub(tlvs,idx,idx+5)
+				idx = idx + 6
+			end
 			tlen = tonumber( "0x"..( string.sub(tlvs,idx,idx+1) or "00"))
 			idx = idx + 2
 			value = string.sub(tlvs,idx,idx+tlen*2-1)
@@ -2174,6 +2183,8 @@ function funckeymenu()
       return do_obj_logon_init()
     elseif scrinput == "00100100" then
        return do_obj_swdownload()
+	elseif scrinput == "5620" then
+	  return do_obj_clear_saf()
 	elseif scrinput == "5628" then
 	  return do_obj_upload_saf()
     elseif scrinput == "5629" then
@@ -2198,6 +2209,46 @@ function do_obj_swdownload()
   terminal.DisplayObject(scrlines,KEY.OK+KEY.CNCL,EVT.TIMEOUT,ScrnTimeoutTHR)
   return do_obj_gprs_register(do_obj_txn_finish)
 end
+
+function do_obj_clear_saf()
+	local screvent=""
+	local revmin,revmax= terminal.GetArrayRange("REVERSAL")
+	local safmin,safmax= terminal.GetArrayRange("SAF")
+	if revmax == revmin and safmax == safmin then 
+		local scrlines = "WIDELBL,THIS,REVERSAL/SAF,2,C;" .. "WIDELBL,THIS,EMPTY,3,C;"
+		screvent,_ = terminal.DisplayObject(scrlines,KEY.CNCL+KEY.CLR+KEY.OK,EVT.TIMEOUT,30000)
+		return do_obj_txn_finish(true)
+	else
+		local fname = "REVERSAL"
+		for i=revmin,revmax-1 do
+		  if terminal.FileExist(fname..i) then
+			local roc = terminal.GetJsonValue(fname..i,"62")
+			roc = terminal.StringToHex(roc,#roc)
+			local scrlines = "WIDELBL,THIS,DELETE REVERSAL?,2,C;" .. "WIDELBL,THIS,ROC/INV:"..roc..",3,C;".."BUTTONS_YES,THIS,YES,B,10;" .."BUTTONS_NO,THIS,NO,B,33;" 
+			screvent,_ = terminal.DisplayObject(scrlines,KEY.CNCL+KEY.CLR+KEY.OK,EVT.TIMEOUT,30000)
+			if screvent == "BUTTONS_YES" or screvent == "KEY_OK" then terminal.FileRemove(fname .. i); terminal.SetArrayRange(fname, i+1, "") end 
+			break
+		  end
+		end
+
+		if screvent == "" then
+		  local fname = "SAF"
+		  for i=safmin,safmax-1 do
+			if terminal.FileExist(fname..i) then
+				local roc = terminal.GetJsonValue(fname..i,"62")
+				roc = terminal.StringToHex(roc,#roc)
+				local scrlines = "WIDELBL,THIS,DELETE SAF?,2,C;" .. "WIDELBL,THIS,ROC/INV:"..roc..",3,C;".."BUTTONS_YES,THIS,YES,B,10;" .."BUTTONS_NO,THIS,NO,B,33;"
+				screvent,_ = terminal.DisplayObject(scrlines,KEY.CNCL+KEY.CLR+KEY.OK,EVT.TIMEOUT,30000)
+				if screvent == "BUTTONS_YES" or screvent == "KEY_OK" then terminal.FileRemove(fname .. i); terminal.SetArrayRange(fname, i+1, "") end 
+				break
+			end
+		  end
+		end
+		saf_rev_check()
+		return do_obj_txn_finish(true)
+	end
+end
+
 
 function do_obj_upload_saf()
   local scrlines = "WIDELBL,THIS,UPLOAD ,2,C;" .. "WIDELBL,THIS,REVERSAL/SAF,3,C;".."BUTTONS_YES,THIS,YES,B,10;"  .."BUTTONS_NO,THIS,NO,B,33;" 
@@ -2362,6 +2413,18 @@ function swipecheck(track2)
   end
 
   return 1,cardname
+end
+
+
+function debugPrint(msg)
+	local maxlen = #msg
+	local idx = 0
+	while true do
+		terminal.Print("\\4"..string.sub(msg, idx, idx+199).."\\n", false)
+		idx = idx + 200
+		if idx > maxlen then break end
+	end
+	terminal.Print("\\n", true)
 end
 
 terminal.As2805SetBcdLength("0")

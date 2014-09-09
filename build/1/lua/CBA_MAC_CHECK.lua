@@ -1,6 +1,8 @@
 function mac_check(rcvmsg)
 	local data_nomac = string.sub(rcvmsg,1,#rcvmsg-16)
 	local data_mac = string.sub(rcvmsg,-16)
+	debugPrint(data_nomac)
+	debugPrint(data_mac)
 	local macr_x = string.sub(config.mab_send,-16)
 	local macr_y = string.sub(config.mab_recv,-16)
 	local mti2,mti3 = string.sub(rcvmsg,1,2),string.sub(rcvmsg,1,3)
@@ -39,6 +41,7 @@ function mac_check(rcvmsg)
 		return true
 	else
 		--return false
+		terminal.DebugDisp("boyang...mac error ["..data_mac.."] != "..chkmac)
 		return true --workaround
 	end
 end
