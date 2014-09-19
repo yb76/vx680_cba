@@ -75,9 +75,7 @@ function do_obj_advice_req()
 		      terminal.Print(prtdata,true)
 		      checkPrint(prtdata)
 			end
-			terminal.DebugDisp("boyang....1")
   			do_obj_saf_rev_start()
-			terminal.DebugDisp("boyang....2")
         	return do_obj_txn_finish()
 	  end
     end

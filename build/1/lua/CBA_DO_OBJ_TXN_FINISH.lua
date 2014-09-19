@@ -11,7 +11,6 @@ function do_obj_txn_finish(nosaf)
       local scrlines = "WIDELBL,,286,2,C;"
       terminal.DisplayObject(scrlines,0,EVT.SCT_OUT,ScrnTimeoutZO)
 	end
-	terminal.DebugDisp("boyang finish...."..(ecrd.RETURN and "return" or "idle"))
 	local nextstep = ( ecrd.RETURN or do_obj_idle )
 	saf_rev_check()
 	if nosaf or txn.rc == "Y3" then 

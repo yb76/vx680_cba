@@ -25,7 +25,6 @@ function do_obj_swipecard()
   if txn.CTEMVRS and txn.CTEMVRS == "10" then return do_obj_transdial() --offline declined
   elseif txn.CTEMVRS and txn.CTEMVRS == "W30" then return do_obj_transdial() --offline declined
   elseif cardreject then return do_obj_txn_finish()
-  elseif txn.moto then return do_obj_cardentry()
   elseif txn.swipefirst == 1 then return do_obj_account()
   elseif txn.chipcard and not txn.emv.fallback and not txn.emv_retry then 
 	return do_obj_account()

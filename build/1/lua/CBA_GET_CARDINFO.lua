@@ -1,9 +1,7 @@
 function get_cardinfo()
   terminal.DisplayObject("WIDELBL,THIS,READING DATA,2,C;".."WIDELBL,,26,4,C;",0,0,ScrnTimeoutZO)
-  terminal.DebugDisp("boyang get cardinfo...1")
   if txn.chipcard and not txn.emv.fallback then
 	if txn.ctls == "CTLS_E" then
-	terminal.DebugDisp("boyang get cardinfo...2")
 		local TxnTlvs = txn.TLVs
 		local EMVPAN = ""
 		local EMVPANSeq = ""
@@ -23,10 +21,7 @@ function get_cardinfo()
 		local EMV9F6C = get_value_from_tlvs("9F6C")
 		local EMV9F66 = get_value_from_tlvs("9F66")
 
-	terminal.DebugDisp("boyang get cardinfo...21")
-
 		if not txn.ctlsPin and #EMV9F66 > 0  then --VISA
-		terminal.DebugDisp("boyang get cardinfo...211")
 			local tag9f66_2 = tonumber(string.sub( EMV9F66,3,4),16)
 			local tag9f6c_1 = #EMV9F6C>0 and tonumber(string.sub( EMV9F6C,1,2),16) or 0
 			local tag9f6c_2 = #EMV9F6C>0 and tonumber(string.sub( EMV9F6C,3,4),16) or 0
@@ -47,7 +42,6 @@ function get_cardinfo()
 		elseif string.sub(EMVCVMR,2,2) == "F" then txn.ctlsPin = "4" --No CVM required.
 		end
 
-		terminal.DebugDisp("boyang get cardinfo...22["..EMVTRACK2.."]")
 		if not txn.ctlsPin then txn.ctlsPin = "4" end
 		if EMVPAN ~= "" then txn.emv.pan = EMVPAN end
 		if EMVPANSeq~= "" then txn.emv.panseqnum = EMVPANSeq  end
@@ -55,7 +49,6 @@ function get_cardinfo()
 		if txn.emv.track2 and #txn.emv.track2 > 37 then txn.emv.track2 = string.sub( txn.emv.track2,1,37) end	
 	end
 	
-	terminal.DebugDisp("boyang get cardinfo...23")
     if terminal.EmvReadAppData() == 0 then
        txn.emv.pan,txn.emv.panseqnum,txn.emv.track2 = terminal.EmvGetTagData(0x5A00,0x5F34,0x5700)
        if txn.emv.track2 and #txn.emv.track2 > 37 then txn.emv.track2 = string.sub( txn.emv.track2,1,37) end
@@ -76,6 +69,5 @@ function get_cardinfo()
 	    txn.cardname = terminal.TextTable("CARD_NAME",string.sub(cardname_prefix,-2))
 	  end
   end 
-  terminal.DebugDisp("boyang get cardinfo...3")
   return true
 end

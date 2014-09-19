@@ -293,7 +293,6 @@ function do_obj_swipecard()
   if txn.CTEMVRS and txn.CTEMVRS == "10" then return do_obj_transdial() --offline declined
   elseif txn.CTEMVRS and txn.CTEMVRS == "W30" then return do_obj_transdial() --offline declined
   elseif cardreject then return do_obj_txn_finish()
-  elseif txn.moto then return do_obj_cardentry()
   elseif txn.swipefirst == 1 then return do_obj_account()
   elseif txn.chipcard and not txn.emv.fallback and not txn.emv_retry then 
 	return do_obj_account()
@@ -318,104 +317,6 @@ function do_obj_swipecard()
 		if txn.totalamt then return do_obj_account() else return do_obj_prchamount() end
 	  end
     end
-  end
-end
-
-function do_obj_cardentry(retry)
-  local scrlines = "WIDELBL,,110,2,C;" .. "LNUMBER,,0,5,10,19,13;"
-  local scrkeys  = KEY.OK+KEY.CLR+KEY.CNCL
-  local screvents = EVT.TIMEOUT
-  local screvent,scrinput = terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnTimeout)
-
-  if screvent == "KEY_CLR" then
-    return do_obj_swipecard()
-  elseif screvent == "KEY_OK" then
-    txn.pan = scrinput
-    txn.account = "CREDIT"
-    if terminal.Luhn(txn.pan) == false then return do_obj_luhnerror(retry)
-    else return do_obj_card_expiry() end
-  elseif screvent == "CANCEL" or screvent == "TIME" then
-	local scrlines1 = "WIDELBL,,120,3,C;"
-	local scrkeys1  = KEY.OK+KEY.CLR+KEY.CNCL
-	local screvents1 = EVT.TIMEOUT
-	local screvent,scrinput = terminal.DisplayObject(scrlines1,scrkeys1,screvents1,1000)
-
-    return do_obj_txn_finish()
-  end
-end
-
-function do_obj_luhnerror(retry)
-  local scrlines = "WIDELBL,,120,3,C;" .. "WIDELBL,,123,5,C;"
-  local scrkeys  = KEY.CNCL+KEY.OK+KEY.CLR
-  terminal.ErrorBeep()
-  local screvent,_ = terminal.DisplayObject(scrlines,scrkeys,EVT.TIMEOUT,ScrnErrTimeout)
-
-  retry = retry and retry + 1 or 1
-  if retry >= 3 then
-    return do_obj_txn_finish() 
-  else
-	return do_obj_cardentry(retry)
-  end
-end
-
-function do_obj_card_expiry(retry)
-  local scrlines = "WIDELBL,,111,2,C;" .. "LNUMBER,,0,5,18,4,4;"
-  local scrkeys  = KEY.OK+KEY.CLR+KEY.CNCL
-  local screvents = EVT.TIMEOUT
-  local screvent,scrinput = terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnTimeout)
-
-  if screvent == "KEY_CLR" then
-    return do_obj_cardentry()
-  elseif screvent == "KEY_OK" then
-	local currmonth = terminal.Time( "YYMM")
-	local expirydate = string.sub(scrinput,3,4) .. string.sub(scrinput,1,2)
-	if expirydate ~= "" and tonumber(currmonth) > tonumber(expirydate) then
-		return do_obj_invmonth(retry)
-    else txn.expiry = scrinput
-         return do_obj_ccv()
-    end
-  else 
-	local scrlines1 = "WIDELBL,,120,3,C;"
-	local scrkeys1  = KEY.OK+KEY.CLR+KEY.CNCL
-	local screvents1 = EVT.TIMEOUT
-	local screvent,scrinput = terminal.DisplayObject(scrlines1,scrkeys1,screvents1,1000)
-
-	return do_obj_txn_finish()
-  end
-end
-
-function do_obj_invmonth(retry)
-  terminal.ErrorBeep()
-  local scrlines = "WIDELBL,,299,3,C;" .. "WIDELBL,,201,5,C;"
-  local scrkeys  = KEY.OK+KEY.CLR+KEY.CNCL
-  local screvent,_ = terminal.DisplayObject(scrlines,scrkeys,EVT.TIMEOUT,ScrnErrTimeout)
-
-  retry = retry and retry + 1 or 1
-  if retry >= 3 then
-    return do_obj_txn_finish()
-  else
-    return do_obj_card_expiry(retry)
-  end
-end
-
-function do_obj_ccv()
-  local scrlines = "WIDELBL,,112,2,C;" .. "LNUMBER,,0,5,17,5,1;"
-  local scrkeys  = KEY.OK+KEY.CLR+KEY.CNCL
-  local screvents = EVT.TIMEOUT
-  local screvent,scrinput = terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnTimeout)
-
-  if screvent == "KEY_CLR" then
-    return do_obj_card_expiry()
-  elseif screvent == "KEY_OK" then
-    if #scrinput > 0 then txn.ccv = "CCV" .. scrinput .. "\\" end
-    return do_obj_account()
-  else
-	local scrlines1 = "WIDELBL,,120,3,C;"
-	local scrkeys1  = KEY.OK+KEY.CLR+KEY.CNCL
-	local screvents1 = EVT.TIMEOUT
-	local screvent,scrinput = terminal.DisplayObject(scrlines1,scrkeys1,screvents1,1000)
-
-    return do_obj_txn_finish()
   end
 end
 
@@ -530,7 +431,7 @@ function do_obj_account()
 	return do_obj_txn_nok(desc)
   elseif txn.ctls and txn.CTEMVRS == "W30" then
 	return do_obj_transdial()
-  elseif txn.ctls or txn.cardname == "AMEX" or txn.cardname == "DINERS" or txn.cardname =="JCB" or txn.moto or txn.pan and #txn.pan > 10 then
+  elseif txn.ctls or txn.cardname == "AMEX" or txn.cardname == "DINERS" or txn.cardname =="JCB" or txn.pan and #txn.pan > 10 then
 		txn.account = "CREDIT" 
 		scrlines = "WIDELBL,,119,2,C;".."WIDELBL,,26,3,C;"
 		terminal.DisplayObject(scrlines,0,EVT.TIMEOUT,ScrnTimeoutHF)
@@ -941,9 +842,7 @@ function prepare_txn_req()
 			txn.offlinepin = true 
 		end 
 	end
-	if txn.moto then
-		posentry = posentry .."2"
-	elseif txn.chipcard and txn.offlinepin then
+	if txn.chipcard and txn.offlinepin then
 	    posentry = posentry .. "9"
 	else
 		posentry = posentry .. "1"
@@ -1109,7 +1008,6 @@ function do_obj_txn_resp()
     if fld12 and fld13 then txn.time = fld13..fld12 end
     if fld38 and #fld38>0 then txn.authid = fld38 end
     if fld39 and #fld39>0 then txn.rc = fld39 end
-    if fld55 and #fld55>0 then terminal.DebugDisp("boyang...fld55="..fld55) end --TESTING
 
     if errmsg ~= "NOERROR" then return do_obj_txn_nok(errmsg)  -- as2805 error
     elseif fld39 ~= "00" and fld39 ~= "08" then 
@@ -1157,7 +1055,7 @@ function do_obj_txn_resp()
 end
 
 function do_obj_txn_ok()
-    local signflag = ( not ( txn.ctls and txn.chipcard) and txn.pinblock_flag == "NOPIN" or txn.ctlsPin == "1" or txn.ctlsPin == "3" or ( txn.rc == "08" or (txn.chipcard and terminal.EmvGlobal("GET","SIGN")) or txn.pan) and not txn.moto)
+    local signflag = ( not ( txn.ctls and txn.chipcard) and txn.pinblock_flag == "NOPIN" or txn.ctlsPin == "1" or txn.ctlsPin == "3" or ( txn.rc == "08" or (txn.chipcard and terminal.EmvGlobal("GET","SIGN")) or txn.pan))
 	local scrlines,resultstr = "",""
 	scrlines =  "WIDELBL,,30,2,C;" .."WIDELBL,,147,4,C;" 
 	if signflag and txn.rc == "00" then txn.rc = "08" elseif not signflag and txn.rc == "08" then txn.rc = "00" end
@@ -1167,8 +1065,6 @@ function do_obj_txn_ok()
 	if signflag then 
 		scrlines = "WIDELBL,,31,2,C;" .."WIDELBL,,32,4,C;" ;
 		resultstr = "APPROVED\\R" .. txn.rc.."\\n" .. "CARDHOLDER SIGN HERE:\\n\\n\\n\\n\\nX______________________\\n"
-	else
-		if txn.moto then resultstr_nosign = "MOTO APPROVED\\R00\\n"; resultstr = resultstr_nosign end
 	end
     terminal.DisplayObject(scrlines,0,0,ScrnTimeoutZO)
     local who = "MERCHANT COPY\\n"
@@ -1288,7 +1184,7 @@ function do_obj_txn_second_copy()
     scrlines = "WIDELBL,,37,2,C;" .."WIDELBL,,26,4,C;"
     terminal.DisplayObject(scrlines,0,0,ScrnTimeoutZO)
 
-    local resultstr= (txn.rc ~= "Y1" and txn.rc ~= "Y3" and (( txn.moto and "MOTO " or "" ) .. "APPROVED\\R") or "OFFLINE APPROVED\\R") .. txn.rc.."\\n"
+    local resultstr= (txn.rc ~= "Y1" and txn.rc ~= "Y3" and ( "APPROVED\\R") or "OFFLINE APPROVED\\R") .. txn.rc.."\\n"
     local who = "CUSTOMER\ COPY\\n"
 	local prtvalue = (ecrd.HEADER or "") .. (ecrd.HEADER_OK or "") .. get_ipay_print( who, true, resultstr) 
 	.. (ecrd.CTRAILER or "") 
@@ -1854,7 +1750,6 @@ function do_obj_txn_finish(nosaf)
       local scrlines = "WIDELBL,,286,2,C;"
       terminal.DisplayObject(scrlines,0,EVT.SCT_OUT,ScrnTimeoutZO)
 	end
-	terminal.DebugDisp("boyang finish...."..(ecrd.RETURN and "return" or "idle"))
 	local nextstep = ( ecrd.RETURN or do_obj_idle )
 	saf_rev_check()
 	if nosaf or txn.rc == "Y3" then 
@@ -1977,9 +1872,7 @@ function get_ipay_print_nok(who,result_str)
 
   local func,s_amt = "",""
   local amt = txn.prchamt or 0
-  if txn.moto and txn.poscc == "08" then func = "MAIL/PHONE"
-  elseif txn.moto and txn.poscc == "59" then func = "E-COMMERCE"
-  elseif txn.func =="PRCH" then func =  "PURCHASE"
+  if txn.func =="PRCH" then func =  "PURCHASE"
   else func = txn.func
   end
 
@@ -2080,9 +1973,7 @@ function get_ipay_print(who,result_ok,result_str)
   end
 
   local func,s_amt,amt = "","",txn.prchamt
-  if txn.moto and txn.poscc == "08" then func = "MAIL/PHONE"
-  elseif txn.moto and txn.poscc == "59" then func = "E-COMMERCE"
-  elseif txn.func =="PRCH" then func = (txn.cashamt and txn.cashamt>0 and "PUR/CASH" or "PURCHASE")
+  if txn.func =="PRCH" then func = (txn.cashamt and txn.cashamt>0 and "PUR/CASH" or "PURCHASE")
   else func = txn.func
   end
   local authstr = (true or txn.rc == "Y1" or txn.rc == "Y3" ) and "" or ("\\fAUTH NO:\\R"..(txn.authid or "").."\\n" ) --TESTING
@@ -2248,7 +2139,6 @@ function do_obj_clear_saf()
 		return do_obj_txn_finish(true)
 	end
 end
-
 
 function do_obj_upload_saf()
   local scrlines = "WIDELBL,THIS,UPLOAD ,2,C;" .. "WIDELBL,THIS,REVERSAL/SAF,3,C;".."BUTTONS_YES,THIS,YES,B,10;"  .."BUTTONS_NO,THIS,NO,B,33;" 

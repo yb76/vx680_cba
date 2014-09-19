@@ -8,13 +8,12 @@ function do_obj_account()
   local screvents = EVT.TIMEOUT+EVT.SCT_OUT
   txn.account = ""
   local ok,desc = get_cardinfo()
-  terminal.DebugDisp("boyang acc...1")
  
   if not ok then
 	return do_obj_txn_nok(desc)
   elseif txn.ctls and txn.CTEMVRS == "W30" then
 	return do_obj_transdial()
-  elseif txn.ctls or txn.cardname == "AMEX" or txn.cardname == "DINERS" or txn.cardname =="JCB" or txn.moto or txn.pan and #txn.pan > 10 then
+  elseif txn.ctls or txn.cardname == "AMEX" or txn.cardname == "DINERS" or txn.cardname =="JCB" or txn.pan and #txn.pan > 10 then
 		txn.account = "CREDIT" 
 		scrlines = "WIDELBL,,119,2,C;".."WIDELBL,,26,3,C;"
 		terminal.DisplayObject(scrlines,0,EVT.TIMEOUT,ScrnTimeoutHF)

@@ -9,7 +9,6 @@ function tcpsend(msg)
   local mti = string.sub(msg,1,4)
   if true or mti ~= "9820" then -- keep MAC residue X
 	local macvalue = string.sub(msg,-16)
-	terminal.DebugDisp("msg = "..msg)
 	terminal.SetIvMode("0")
 	config.mab_send = macvalue ..terminal.Enc (macvalue,"","16",config.key_kmacs)
   end

@@ -51,7 +51,6 @@ function do_obj_idle()
 	idlescrlines_safsign = string.gsub(idlescrlines_safsign,scrlines_sale,scrlines_batt)
   end
 
-
   local screvent,_ = terminal.DisplayObject(idlescrlines_safsign,scrkeys,screvents,scrtimeout)
   idletimeout = 10000
   if screvent ~= "TIME" then ticknow = terminal.SysTicks() end

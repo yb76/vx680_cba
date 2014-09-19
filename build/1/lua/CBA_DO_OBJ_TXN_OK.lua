@@ -1,6 +1,5 @@
 function do_obj_txn_ok()
-terminal.DebugDisp("boyang txnok")
-    local signflag = ( not ( txn.ctls and txn.chipcard) and txn.pinblock_flag == "NOPIN" or txn.ctlsPin == "1" or txn.ctlsPin == "3" or ( txn.rc == "08" or (txn.chipcard and terminal.EmvGlobal("GET","SIGN")) or txn.pan) and not txn.moto)
+    local signflag = ( not ( txn.ctls and txn.chipcard) and txn.pinblock_flag == "NOPIN" or txn.ctlsPin == "1" or txn.ctlsPin == "3" or ( txn.rc == "08" or (txn.chipcard and terminal.EmvGlobal("GET","SIGN")) or txn.pan))
 	local scrlines,resultstr = "",""
 	scrlines =  "WIDELBL,,30,2,C;" .."WIDELBL,,147,4,C;" 
 	if signflag and txn.rc == "00" then txn.rc = "08" elseif not signflag and txn.rc == "08" then txn.rc = "00" end
@@ -10,8 +9,6 @@ terminal.DebugDisp("boyang txnok")
 	if signflag then 
 		scrlines = "WIDELBL,,31,2,C;" .."WIDELBL,,32,4,C;" ;
 		resultstr = "APPROVED\\R" .. txn.rc.."\\n" .. "CARDHOLDER SIGN HERE:\\n\\n\\n\\n\\nX______________________\\n"
-	else
-		if txn.moto then resultstr_nosign = "MOTO APPROVED\\R00\\n"; resultstr = resultstr_nosign end
 	end
     terminal.DisplayObject(scrlines,0,0,ScrnTimeoutZO)
     local who = "MERCHANT COPY\\n"

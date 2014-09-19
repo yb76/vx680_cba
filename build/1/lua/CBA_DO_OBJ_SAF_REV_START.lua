@@ -5,9 +5,7 @@ function do_obj_saf_rev_start(nextstep,mode)
 	local saf_sent,rev_sent = false,false
 	local ok = true
 	if (not mode or mode == "REVERSAL") and rev_exist then 
-		terminal.DebugDisp("boyang....rev...1")
 		rev_sent = do_obj_saf_rev_send("REVERSAL")
-		terminal.DebugDisp("boyang....rev...1")		
 		if(not rev_sent) then ok = false end
 	end
 	if (not mode or mode == "SAF") and saf_exist and ok then saf_sent = do_obj_saf_rev_send("SAF") end

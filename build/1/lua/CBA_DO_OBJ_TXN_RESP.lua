@@ -23,7 +23,6 @@ function do_obj_txn_resp()
     if fld12 and fld13 then txn.time = fld13..fld12 end
     if fld38 and #fld38>0 then txn.authid = fld38 end
     if fld39 and #fld39>0 then txn.rc = fld39 end
-    if fld55 and #fld55>0 then terminal.DebugDisp("boyang...fld55="..fld55) end --TESTING
 
     if errmsg ~= "NOERROR" then return do_obj_txn_nok(errmsg)  -- as2805 error
     elseif fld39 ~= "00" and fld39 ~= "08" then 

@@ -62,9 +62,7 @@ function get_ipay_print(who,result_ok,result_str)
   end
 
   local func,s_amt,amt = "","",txn.prchamt
-  if txn.moto and txn.poscc == "08" then func = "MAIL/PHONE"
-  elseif txn.moto and txn.poscc == "59" then func = "E-COMMERCE"
-  elseif txn.func =="PRCH" then func = (txn.cashamt and txn.cashamt>0 and "PUR/CASH" or "PURCHASE")
+  if txn.func =="PRCH" then func = (txn.cashamt and txn.cashamt>0 and "PUR/CASH" or "PURCHASE")
   else func = txn.func
   end
   local authstr = (true or txn.rc == "Y1" or txn.rc == "Y3" ) and "" or ("\\fAUTH NO:\\R"..(txn.authid or "").."\\n" ) --TESTING

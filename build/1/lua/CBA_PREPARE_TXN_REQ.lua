@@ -51,9 +51,7 @@ function prepare_txn_req()
 			txn.offlinepin = true 
 		end 
 	end
-	if txn.moto then
-		posentry = posentry .."2"
-	elseif txn.chipcard and txn.offlinepin then
+	if txn.chipcard and txn.offlinepin then
 	    posentry = posentry .. "9"
 	else
 		posentry = posentry .. "1"

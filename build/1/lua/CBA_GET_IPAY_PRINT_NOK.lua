@@ -48,9 +48,7 @@ function get_ipay_print_nok(who,result_str)
 
   local func,s_amt = "",""
   local amt = txn.prchamt or 0
-  if txn.moto and txn.poscc == "08" then func = "MAIL/PHONE"
-  elseif txn.moto and txn.poscc == "59" then func = "E-COMMERCE"
-  elseif txn.func =="PRCH" then func =  "PURCHASE"
+  if txn.func =="PRCH" then func =  "PURCHASE"
   else func = txn.func
   end
 
