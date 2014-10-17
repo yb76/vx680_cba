@@ -3,7 +3,7 @@ function do_obj_pin()
   if txn.chipcard and not txn.ctls and ( txn.account == "SAVINGS" or txn.account == "CHEQUE" ) then txn.earlyemv = true end
   if txn.pan then
 	return do_obj_transdial()
-  elseif txn.ctls and txn.chipcard and txn.ctlsPin ~= "2" and txn.ctlsPin ~= "3" then 
+  elseif txn.ctls and txn.ctlsPin and txn.ctlsPin ~= "2" and txn.ctlsPin ~= "3" then 
   	return do_obj_transdial()
   elseif txn.chipcard and not txn.earlyemv and not txn.emv.fallback and not txn.ctls then 
   	txn.pinblock_flag = "TODO";return do_obj_transdial()

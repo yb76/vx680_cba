@@ -7,7 +7,6 @@ function emv_init()
     if ok ~= 0 and ok ~= 103 --[[CARD_REMOVED]] and ok ~= 104 --[[CARD_BLOCKED]] and ok ~= 105 --[[APPL_BLOCKED]] and ok ~= 110 --[[TRANS_CANCELLED]] and ok ~= 130 --[[INVALID_PARAMETER]] then
       txn.emv.fallback = true
     end
-	terminal.DebugDisp(" 5f57 == "..terminal.EmvGetTagData(0x5F57))
   end
   return ok
 end

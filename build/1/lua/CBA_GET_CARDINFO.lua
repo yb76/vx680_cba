@@ -1,7 +1,6 @@
 function get_cardinfo()
   terminal.DisplayObject("WIDELBL,THIS,READING DATA,2,C;".."WIDELBL,,26,4,C;",0,0,ScrnTimeoutZO)
-  if txn.chipcard and not txn.emv.fallback then
-	if txn.ctls == "CTLS_E" then
+  if txn.ctls == "CTLS_E" then
 		local TxnTlvs = txn.TLVs
 		local EMVPAN = ""
 		local EMVPANSeq = ""
@@ -47,8 +46,13 @@ function get_cardinfo()
 		if EMVPANSeq~= "" then txn.emv.panseqnum = EMVPANSeq  end
 		if EMVTRACK2~= "" then txn.emv.track2 = EMVTRACK2 end
 		if txn.emv.track2 and #txn.emv.track2 > 37 then txn.emv.track2 = string.sub( txn.emv.track2,1,37) end	
-	end
-	
+  elseif txn.ctls == "CTLS_S" then
+		local EMVCVMR = get_value_from_tlvs("9F34")
+		if string.sub(EMVCVMR,2,2) == "2" then txn.ctlsPin = "2" --Enciphered PIN verified online
+		elseif string.sub(EMVCVMR,2,2) == "E" then txn.ctlsPin = "1" --Signature (paper).
+		elseif string.sub(EMVCVMR,2,2) == "F" then txn.ctlsPin = "4" --No CVM required.
+		end
+  elseif txn.chipcard and not txn.emv.fallback then
     if terminal.EmvReadAppData() == 0 then
        txn.emv.pan,txn.emv.panseqnum,txn.emv.track2 = terminal.EmvGetTagData(0x5A00,0x5F34,0x5700)
        if txn.emv.track2 and #txn.emv.track2 > 37 then txn.emv.track2 = string.sub( txn.emv.track2,1,37) end

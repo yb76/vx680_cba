@@ -6,9 +6,11 @@ function itaxi_pay_done(rtnvalue)
     taxi_min = taxi_min + 1
   end
 
+  local tipstr = taxi.tip and taxi.tip > 0 and (",TIP:"..taxi.tip) or ""
+
   local taxi_nextfile = "TAXI"..taxi_next
   taxi.current_taxi_idx = taxi_next
-  local taxistr = "{TYPE:DATA,NAME:"..taxi_nextfile..",GROUP:CBA,VERSION:2.0,INV:"..inv..",STAN:"..ecrd.INV..",TXNTOTAL:"..ecrd.AMT..",SUBTOTAL:"..ecrd.KEEP..",HEADER:".. ecrd.HEADER..",HEADER_OK:"..ecrd.HEADER_OK..",MRECEIPT:"..ecrd.MRECEIPT..",TRAILER:"..ecrd.MTRAILER..",EMVRCPT:"..ecrd.emvrcpt..",CRCPT:"..ecrd.CRECEIPT.."}"
+  local taxistr = "{TYPE:DATA,NAME:"..taxi_nextfile..",GROUP:CBA,VERSION:2.0,INV:"..inv..",STAN:"..ecrd.INV..",TXNTOTAL:"..ecrd.AMT..",SUBTOTAL:"..ecrd.KEEP..",HEADER:".. ecrd.HEADER..",HEADER_OK:"..ecrd.HEADER_OK..",MRECEIPT:"..ecrd.MRECEIPT..",TRAILER:"..ecrd.MTRAILER..",EMVRCPT:"..ecrd.emvrcpt..",CRCPT:"..ecrd.CRECEIPT..tipstr.."}"
   
   terminal.NewObject(taxi_nextfile,taxistr)
   if #ecrd.emvrcpt > 0 then terminal.NewObject("LASTEMV_RCPT",taxistr) end
@@ -18,7 +20,7 @@ function itaxi_pay_done(rtnvalue)
   local taxitxn_nextfile = "iTAXI_TXN"..taxitxn_next
   local account = ( ecrd.ACCOUNT == "4" and "CR" or ( ecrd.ACCOUNT=="1" and "SAV" or "CHQ"))
   local dt = string.sub(ecrd.DATE,3,4)..string.sub(ecrd.DATE,1,2) --ddmm
-  local taxitxnstr = "{TYPE:DATA,NAME:iTAXI_TXN"..taxitxn_next..",GROUP:CBA,VERSION:2.0,DATE:"..dt..",TIME:"..ecrd.TIME..",TID:"..ecrd.TID..",DRIVER:"..taxicfg.auth_no..",ABN:"..taxicfg.abn_no..",TAXI:"..taxicfg.taxi_no..",STAN:"..ecrd.INV..",INV:"..inv..",METER:"..taxi.meter..",FARE:"..ecrd.KEEP..",TOTAL:"..ecrd.AMT..",COMM:"..taxicfg.comm..",PICK_UP:"..taxi.pickup..",DROP_OFF:"..taxi.dropoff..",PAN:TODO,CARDNO:"..ecrd.CARDNO..",ACCOUNT:"..account..",RC:"..ecrd.RC..",AUTHID:"..ecrd.AUTHID.."}"
+  local taxitxnstr = "{TYPE:DATA,NAME:iTAXI_TXN"..taxitxn_next..",GROUP:CBA,VERSION:2.0,DATE:"..dt..",TIME:"..ecrd.TIME..",TID:"..ecrd.TID..",DRIVER:"..taxicfg.auth_no..",ABN:"..taxicfg.abn_no..",TAXI:"..taxicfg.taxi_no..",STAN:"..ecrd.INV..",INV:"..inv..",METER:"..taxi.meter..",FARE:"..ecrd.KEEP..",TOTAL:"..ecrd.AMT..",COMM:"..taxicfg.comm..",PICK_UP:"..taxi.pickup..",DROP_OFF:"..taxi.dropoff..",PAN:TODO,CARDNO:"..ecrd.CARDNO..",ACCOUNT:"..account..",RC:"..ecrd.RC..",AUTHID:"..ecrd.AUTHID..tipstr.."}"
   terminal.NewObject(taxitxn_nextfile,taxitxnstr)
   terminal.SetArrayRange("iTAXI_TXN","",taxitxn_next+1)
   taxi.current_taxitxn_idx = taxitxn_next

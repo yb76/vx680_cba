@@ -322,8 +322,7 @@ end
 
 function get_cardinfo()
   terminal.DisplayObject("WIDELBL,THIS,READING DATA,2,C;".."WIDELBL,,26,4,C;",0,0,ScrnTimeoutZO)
-  if txn.chipcard and not txn.emv.fallback then
-	if txn.ctls == "CTLS_E" then
+  if txn.ctls == "CTLS_E" then
 		local TxnTlvs = txn.TLVs
 		local EMVPAN = ""
 		local EMVPANSeq = ""
@@ -369,8 +368,13 @@ function get_cardinfo()
 		if EMVPANSeq~= "" then txn.emv.panseqnum = EMVPANSeq  end
 		if EMVTRACK2~= "" then txn.emv.track2 = EMVTRACK2 end
 		if txn.emv.track2 and #txn.emv.track2 > 37 then txn.emv.track2 = string.sub( txn.emv.track2,1,37) end	
-	end
-	
+  elseif txn.ctls == "CTLS_S" then
+		local EMVCVMR = get_value_from_tlvs("9F34")
+		if string.sub(EMVCVMR,2,2) == "2" then txn.ctlsPin = "2" --Enciphered PIN verified online
+		elseif string.sub(EMVCVMR,2,2) == "E" then txn.ctlsPin = "1" --Signature (paper).
+		elseif string.sub(EMVCVMR,2,2) == "F" then txn.ctlsPin = "4" --No CVM required.
+		end
+  elseif txn.chipcard and not txn.emv.fallback then
     if terminal.EmvReadAppData() == 0 then
        txn.emv.pan,txn.emv.panseqnum,txn.emv.track2 = terminal.EmvGetTagData(0x5A00,0x5F34,0x5700)
        if txn.emv.track2 and #txn.emv.track2 > 37 then txn.emv.track2 = string.sub( txn.emv.track2,1,37) end
@@ -471,7 +475,7 @@ function do_obj_pin()
   if txn.chipcard and not txn.ctls and ( txn.account == "SAVINGS" or txn.account == "CHEQUE" ) then txn.earlyemv = true end
   if txn.pan then
 	return do_obj_transdial()
-  elseif txn.ctls and txn.chipcard and txn.ctlsPin ~= "2" and txn.ctlsPin ~= "3" then 
+  elseif txn.ctls and txn.ctlsPin and txn.ctlsPin ~= "2" and txn.ctlsPin ~= "3" then 
   	return do_obj_transdial()
   elseif txn.chipcard and not txn.earlyemv and not txn.emv.fallback and not txn.ctls then 
   	txn.pinblock_flag = "TODO";return do_obj_transdial()
@@ -1563,8 +1567,6 @@ end
 function mac_check(rcvmsg)
 	local data_nomac = string.sub(rcvmsg,1,#rcvmsg-16)
 	local data_mac = string.sub(rcvmsg,-16)
-	debugPrint(data_nomac)
-	debugPrint(data_mac)
 	local macr_x = string.sub(config.mab_send,-16)
 	local macr_y = string.sub(config.mab_recv,-16)
 	local mti2,mti3 = string.sub(rcvmsg,1,2),string.sub(rcvmsg,1,3)
@@ -1603,7 +1605,6 @@ function mac_check(rcvmsg)
 		return true
 	else
 		--return false
-		terminal.DebugDisp("boyang...mac error ["..data_mac.."] != "..chkmac)
 		return true --workaround
 	end
 end
