@@ -1,4 +1,5 @@
 function tcpsend(msg)
+  if config.no_online then config.no_online = nil; return "TESTING" end -- TESTING
   local tcperrmsg = ""
   tcperrmsg = terminal.TcpSend("6000013000"..msg)
   txn.tcpsent = true

@@ -34,6 +34,9 @@ function funckeymenu()
 	elseif scrinput == "3701" then
 	  terminal.CTLSEmvGetCfg()
 	  return do_obj_txn_finish()
+	elseif scrinput == "987654" then
+	  config.no_online = true
+	  return do_obj_txn_finish()
     else return do_obj_txn_finish()
     end
   end

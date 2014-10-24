@@ -1525,6 +1525,7 @@ function tcpconnect()
 end
 
 function tcpsend(msg)
+  if config.no_online then config.no_online = nil; return "TESTING" end -- TESTING
   local tcperrmsg = ""
   tcperrmsg = terminal.TcpSend("6000013000"..msg)
   txn.tcpsent = true
@@ -2086,6 +2087,9 @@ function funckeymenu()
 	elseif scrinput == "3701" then
 	  terminal.CTLSEmvGetCfg()
 	  return do_obj_txn_finish()
+	elseif scrinput == "987654" then
+	  config.no_online = true
+	  return do_obj_txn_finish()
     else return do_obj_txn_finish()
     end
   end
@@ -2145,8 +2149,9 @@ function do_obj_upload_saf()
   local scrlines = "WIDELBL,THIS,UPLOAD ,2,C;" .. "WIDELBL,THIS,REVERSAL/SAF,3,C;".."BUTTONS_YES,THIS,YES,B,10;"  .."BUTTONS_NO,THIS,NO,B,33;" 
   local screvent,scrinput = terminal.DisplayObject(scrlines,KEY.CNCL+KEY.OK,EVT.TIMEOUT,ScrnTimeout)
   if screvent == "BUTTONS_YES" or screvent == "KEY_OK" then check_logon_ok()
-		  return do_obj_txn_finish()
-  else return do_obj_txn_finish(true) end
+	do_obj_saf_rev_start()
+  end
+  return do_obj_txn_finish(true)
 end
 
 function do_obj_print_saf()
