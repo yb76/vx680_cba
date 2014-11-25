@@ -1,4 +1,4 @@
-function swipecheck(track2)
+function swipecheck(track2,fallback)
   if track2 == nil or #track2 < 11 or callback.mcr_func == nil then terminal.ErrorBeep(); return -1 end
 
   local _,_,pan,panetc = string.find(track2, "(%d*)=(%d*)")
@@ -30,7 +30,7 @@ function swipecheck(track2)
   local cardname = terminal.TextTable("CARD_NAME",cardname_prefix)
 
   local chipflag = (panetc and string.sub(panetc,5,5) or "")
-  if chipflag == "2" or chipflag == "6" then
+  if not fallback and (chipflag == "2" or chipflag == "6") then
     terminal.ErrorBeep(); return 0
   end
 

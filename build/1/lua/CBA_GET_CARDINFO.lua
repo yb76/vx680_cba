@@ -1,7 +1,6 @@
 function get_cardinfo()
   terminal.DisplayObject("WIDELBL,THIS,READING DATA,2,C;".."WIDELBL,,26,4,C;",0,0,ScrnTimeoutZO)
   if txn.ctls == "CTLS_E" then
-		local TxnTlvs = txn.TLVs
 		local EMVPAN = ""
 		local EMVPANSeq = ""
 		local EMVTRACK2 = ""
@@ -54,7 +53,7 @@ function get_cardinfo()
 		end
   elseif txn.chipcard and not txn.emv.fallback then
     if terminal.EmvReadAppData() == 0 then
-       txn.emv.pan,txn.emv.panseqnum,txn.emv.track2 = terminal.EmvGetTagData(0x5A00,0x5F34,0x5700)
+       txn.emv.pan,txn.emv.panseqnum,txn.emv.track2,txn.emv.expdate = terminal.EmvGetTagData(0x5A00,0x5F34,0x5700,0x5F24)
        if txn.emv.track2 and #txn.emv.track2 > 37 then txn.emv.track2 = string.sub( txn.emv.track2,1,37) end
     end
   end

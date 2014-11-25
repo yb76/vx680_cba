@@ -1,7 +1,7 @@
 function do_obj_txn_req()
 	local as2805msg,retmsg = prepare_txn_req()
 	if retmsg then
-		if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv then
+		if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
 			txn.offline = true
 			return do_obj_offline_check()
 		else
@@ -25,10 +25,16 @@ function do_obj_txn_req()
 		retmsg = tcpsend(as2805msg)
 		if retmsg ~= "NOERROR" then 
 			if retmsg == "NO_RESPONSE" or retmsg == "TIMEOUT" then copy_txn_to_saf() end
-			if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv then
+			if  txn.chipcard and not txn.ctls and not txn.emv.fallback and not txn.earlyemv then
 				txn.offline = true
 				return do_obj_offline_check()
-			else txn.tcperror = true 
+			elseif (retmsg == "NO_RESPONSE" or retmsg == "TIMEOUT" or retmsg =="TESTING") and check_efb() then
+				txn.rc = "00" 
+				txn.efb = true
+				generate_saf()
+				return do_obj_txn_ok()
+			else 
+				txn.tcperror = true 
 				return do_obj_txn_nok(retmsg)
 			end
 		else return do_obj_txn_resp()

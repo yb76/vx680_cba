@@ -5,7 +5,7 @@ function get_emv_print_tags(debugprint)
 	end
 	local prttags = "\\n\\3"
 	local tac_default,tac_denial,tac_online, iac_default,iac_denial,iac_online ="","","","","",""
-	local f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00
+	local f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00,f9f1b
 	if txn.ctls and txn.chipcard then
 			local f9f06 = get_value_from_tlvs("9F06")
 			if f9f06 == "" then f9f06 = get_value_from_tlvs("8400") end
@@ -23,8 +23,8 @@ function get_emv_print_tags(debugprint)
 			iac_denial = get_value_from_tlvs("9F0E")
 			iac_online = get_value_from_tlvs("9F0F")
 	else
-		f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00 =
-     	terminal.EmvGetTagData(0x9F27,0x9F10,0x9F37,0x9F02,0x5F2A,0x8200,0x9F1A,0x9F34,0x9B00) 
+		f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00,f9f1b =
+     	terminal.EmvGetTagData(0x9F27,0x9F10,0x9F37,0x9F02,0x5F2A,0x8200,0x9F1A,0x9F34,0x9B00,0x9f1b) 
 			
 		tac_default,tac_denial,tac_online, iac_default,iac_denial,iac_online = terminal.EmvGetTacIac()
 	end
@@ -44,6 +44,7 @@ function get_emv_print_tags(debugprint)
 	prttags = prttags.."TRAN CURRENCY:\\R".. f5f2a.."\\n"
 	prttags = prttags.."TERM COUNTRY:\\R".. f9f1a.."\\n"
 	prttags = prttags.."AMOUNT OTHER:\\R".. string.format("$%.2f",i9f03/100).."\\n"
+	prttags = prttags.."FLOOR LMT:\\R".. f9f1b.."\\n"
 
 	return(prttags)
 end

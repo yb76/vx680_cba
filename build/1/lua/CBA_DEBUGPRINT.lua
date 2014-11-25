@@ -1,9 +1,9 @@
 function debugPrint(msg)
 	local maxlen = #msg
-	local idx = 0
+	local idx = 1
 	while true do
-		terminal.Print("\\4"..string.sub(msg, idx, idx+199).."\\n", false)
-		idx = idx + 200
+		terminal.Print("\\4"..string.sub(msg, idx, idx+125).."\\n", false)
+		idx = idx + 126
 		if idx > maxlen then break end
 	end
 	terminal.Print("\\n", true)

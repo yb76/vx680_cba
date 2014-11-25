@@ -55,7 +55,6 @@ function do_obj_cba_mcr_chip()
       local screvent,_ = terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnTimeout)
       if screvent ~= "CHIP_CARD_IN" then nextstep = do_obj_txn_finish 
       else txn.chipcard = true end
-	 
     end
   elseif ok then txn.chipcard = true end
   return nextstep()
@@ -143,36 +142,10 @@ function txn_allowed(txnfunc)
 end
 
 function do_obj_advice_start(auto)
-	local scrlines,scrkeys,screvents,timeout = "","","",0
-	if not auto then
-	 scrlines = "WIDELBL,THIS,SOFTWARE,2,C;" .. "WIDELBL,THIS,CHECK,3,C;".."BUTTONS_1,THIS,YES,8,10;".. "BUTTONS_2,THIS,NO,8,33;"
-	 scrkeys  = KEY.CLR+KEY.CNCL
-	 screvents = EVT.TIMEOUT
-	 timeout = ScrnTimeout
-	else
-	 scrlines = "WIDELBL,THIS,SOFTWARE,2,C;" .. "WIDELBL,THIS,CHECK,3,C;".."WIDELBL,THIS,PLEASE WAIT,4,C;"
-	 scrkeys  = 0
-	 screvents = EVT.TIMEOUT
-	 timeout = ScrnTimeoutHF
-	end
-	local screvent,_ = terminal.DisplayObject(scrlines,scrkeys,screvents,timeout)
-	if auto or screvent == "BUTTONS_1" then
-	  local scrlines = "WIDELBL,,21,4,C;"
-	  terminal.DisplayObject(scrlines,0,0,ScrnTimeoutZO)
-	  local tcpreturn = tcpconnect()
-	  if tcpreturn == "NOERROR" then 
-		 if not auto then
-		 	check_logon_ok() 
-		 	return do_obj_txn_finish()
-		 else return do_obj_advice_req()
-		 end
-	  else scrlines = "WIDELBL,THIS,NO RESPONSE,4,C;"
-		screvent,_ = terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnTimeout)
-		return do_obj_txn_finish()
-	  end
-	else  
-		return do_obj_txn_finish()
-	end
+	local scrlines = "WIDELBL,THIS,SOFTWARE,2,C;" .. "WIDELBL,THIS,CHECK,3,C;".."WIDELBL,THIS,PLEASE WAIT,4,C;"
+	terminal.DisplayObject(scrlines,0,EVT.TIMEOUT,ScrnTimeoutHF)
+	tcpconnect()
+	return do_obj_advice_req()
 end
 
 function do_obj_advice_req()
@@ -272,13 +245,10 @@ function do_obj_swipecard()
   local screvents = EVT.TIMEOUT+EVT.MCR+EVT.SCT_IN
   local cardreject = false
   if txn.emv_retry then scrlines = "WIDELBL,THIS,INSERT CARD,2,C;"; screvents = EVT.TIMEOUT+EVT.SCT_IN end
-
-  if txn.chipcard and txn.emv.fallback then
-    scrlines = "WIDELBL,THIS,SWIPE CARD,2,C;"
-    scrkeys  = KEY.CNCL
-    screvents = EVT.TIMEOUT+EVT.MCR
-  elseif txn.swipefirst == 1 and not txn.ctls and not txn.cardname then
-    local swipeflag,cardname = swipecheck( txn.track2)
+  if txn.chipcard and txn.emv.fallback then scrlines = "WIDELBL,THIS,SWIPE CARD,2,C;"; screvents = EVT.TIMEOUT+EVT.MCR end
+  
+  if txn.swipefirst == 1 and not txn.ctls and not txn.cardname then
+    local swipeflag,cardname = swipecheck(txn.track2,txn.chipcard and txn.emv.fallback)
 	if swipeflag < 0 then cardreject = true
 	elseif swipeflag == 0 then
       scrlines = "WIDELBL,THIS,INSERT CARD,2,C;"
@@ -303,7 +273,7 @@ function do_obj_swipecard()
       txn.track2 = terminal.GetTrack(2)
       if txn.track2 == nil or #txn.track2 < 11 then return do_obj_swipecard()
       elseif not txn.emv.fallback then txn.swipefirst = 1;return do_obj_swipecard() -- double check the chipflag
-      elseif txn.totalamt then return do_obj_account() 
+      elseif txn.totalamt then return do_obj_account() --emvfallback
 	  else txn.swipefirst = 1; return do_obj_prchamount() end
     elseif screvent == "TIME" then
       return do_obj_trantimeout()
@@ -323,7 +293,6 @@ end
 function get_cardinfo()
   terminal.DisplayObject("WIDELBL,THIS,READING DATA,2,C;".."WIDELBL,,26,4,C;",0,0,ScrnTimeoutZO)
   if txn.ctls == "CTLS_E" then
-		local TxnTlvs = txn.TLVs
 		local EMVPAN = ""
 		local EMVPANSeq = ""
 		local EMVTRACK2 = ""
@@ -376,7 +345,7 @@ function get_cardinfo()
 		end
   elseif txn.chipcard and not txn.emv.fallback then
     if terminal.EmvReadAppData() == 0 then
-       txn.emv.pan,txn.emv.panseqnum,txn.emv.track2 = terminal.EmvGetTagData(0x5A00,0x5F34,0x5700)
+       txn.emv.pan,txn.emv.panseqnum,txn.emv.track2,txn.emv.expdate = terminal.EmvGetTagData(0x5A00,0x5F34,0x5700,0x5F24)
        if txn.emv.track2 and #txn.emv.track2 > 37 then txn.emv.track2 = string.sub( txn.emv.track2,1,37) end
     end
   end
@@ -516,61 +485,51 @@ function do_obj_trantimeout()
   return do_obj_txn_finish()
 end
 
+function generate_saf()
+	local safmin,safnext = terminal.GetArrayRange("SAF")
+	local saffile = "SAF"..safnext
+	terminal.FileCopy("TXN_REQ", saffile)
+	terminal.SetJsonValue(saffile,"0","220")
+	terminal.SetJsonValue(saffile,"39",txn.rc or "00")
+	local mmddhhmmss = terminal.Time("MMDDhhmmss")
+	terminal.SetJsonValue(saffile,"12",string.sub(mmddhhmmss,5,10))
+	terminal.SetJsonValue(saffile,"13",string.sub(mmddhhmmss,1,4))
+
+	if txn.cardname == "VISA" and txn.emv.tlv and #txn.emv.tlv > 0 then 
+		terminal.EmvSetTagData(0x8A00,terminal.HexToString(txn.rc))
+		local newtlv = txn.emv.tlv .. terminal.EmvPackTLV("8A009F5B")
+		terminal.SetJsonValue(saffile,"55",newtlv)
+	end
+	terminal.SetJsonValue(saffile,"ROC",config.roc)
+	terminal.SetArrayRange("SAF","",tostring(safnext+1))
+	txn.saf_generated = true
+end
+
 function do_obj_offline_check()
-  if toomany_saf() then 
-	txn.rc = "W30"
-	txn.tcperror = true
-	return do_obj_txn_nok("SAF LIMIT EXCEEDED")
-  else
 	local FAILED_TO_CONNECT = 3
 	local ret = terminal.EmvUseHostData(FAILED_TO_CONNECT,"")
 	if ret == 0 then 
 		txn.rc = "Y3"
-		--prepare 0220
-		if txn.func ~= "AUTH" then
-			local safmin,safnext = terminal.GetArrayRange("SAF")
-			local saffile = "SAF"..safnext
-			terminal.FileCopy("TXN_REQ", saffile)
-			terminal.SetJsonValue(saffile,"0","220")
-			terminal.SetJsonValue(saffile,"39",txn.rc)
-			local mmddhhmmss = terminal.Time("MMDDhhmmss")
-			terminal.SetJsonValue(saffile,"12",string.sub(mmddhhmmss,5,10))
-			terminal.SetJsonValue(saffile,"13",string.sub(mmddhhmmss,1,4))
-			
-			if txn.cardname == "VISA" and txn.emv.tlv and #txn.emv.tlv > 0 then 
-				terminal.EmvSetTagData(0x8A00,terminal.HexToString(txn.rc))
-				local newtlv = txn.emv.tlv .. terminal.EmvPackTLV("8A009F5B")
-				terminal.SetJsonValue(saffile,"55",newtlv)
-			end
-			terminal.SetJsonValue(saffile,"ROC",config.roc)
-			terminal.SetArrayRange("SAF","",tostring(safnext+1))
-			txn.saf_generated = true
-		end
+		generate_saf()
 		return do_obj_txn_ok()
 	else
 		txn.rc = "Z3"
 		return do_obj_txn_nok(txn.rc)
 	end
-  end
 end
 
 function do_obj_transdial()
   local emvok,emvret = true,0
   local tcpreturn = ""
   local nextstep = nil
-  
   if not txn.ctls and txn.chipcard and not txn.emv.fallback then
     if not txn.earlyemv then
 	  if terminal.EmvIsCardPresent() then
 		local acc = (txn.account=="SAVINGS" and 0x10 or txn.account == "CHEQUE" and 0x20 or txn.account=="CREDIT" and 0x30)
-		if emvret == 0 then
-			emvret = terminal.EmvSetAccount(acc) end
-		if emvret == 0 then
-			emvret = terminal.EmvDataAuth() end
- 		if emvret == 0 then
-			emvret = terminal.EmvProcRestrict() end
- 		if emvret == 0 then
-			emvret = terminal.EmvCardholderVerify() end
+		if emvret == 0 then emvret = terminal.EmvSetAccount(acc) end
+		if emvret == 0 then emvret = terminal.EmvDataAuth() end
+ 		if emvret == 0 then emvret = terminal.EmvProcRestrict() end
+ 		if emvret == 0 then emvret = terminal.EmvCardholderVerify() end
  		if emvret == 0 then emvret = terminal.EmvProcess1stAC() end
  		if emvret == 137 then --ONLINE_REQUEST
 		elseif emvret == 150 or emvret == 133  then -- TRANS_APPROVED or OFFLINE_APPROVED
@@ -599,7 +558,7 @@ function do_obj_transdial()
 						txn.rc = "W21"
 						return do_obj_txn_nok("CONNECT")
 				  end
-			elseif txn.CTEMVRS == "W30" or txn.CTEMVRS == " 0" and toomany_saf() then -- Ofline Auth
+			elseif txn.CTEMVRS == "W30" then -- Ofline Auth
 				txn.rc = "W30"
 				txn.tcperror = true
 				return do_obj_txn_nok("SAF LIMIT EXCEEDED")
@@ -633,7 +592,7 @@ function do_obj_transdial()
       if tcpreturn == "NOERROR" then 
 		return do_obj_transstart()
 	  else 
-		if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv then
+		if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
 			txn.offline = true
 			local as2805msg = prepare_txn_req()
 			return do_obj_offline_check()
@@ -642,10 +601,6 @@ function do_obj_transdial()
 			return do_obj_txn_nok("CONNECT")
 		end
 	  end
-  elseif ( emvret == 150 or emvret == 133 ) and toomany_saf() then
-	txn.rc = "W30"
-	txn.tcperror = true
-	return do_obj_txn_nok("SAF LIMIT EXCEEDED")
   elseif emvret == 150 or emvret == 133 then
     txn.rc = "Y1"
 	local as2805msg = prepare_txn_req()
@@ -673,11 +628,26 @@ function do_obj_transdial()
   end
 end
 
-function toomany_saf()
+function toomany_saf(amt)
+	if txn and txn.toomany_saf == true or txn and txn.toomany_saf == false then
+		return txn.toomany_saf
+	end
+	txn.toomany_saf = false
 	local safmin,safmax= terminal.GetArrayRange("SAF")
 	local cnt = safmax - safmin + 1
+	local sumof_saf = 0
 	local limit = config.saf_limit or 0
-	if cnt > limit then return true else return false end
+	local limit_amt = config.saf_limit_amt or 0
+	if cnt > limit then txn.toomany_saf = true ;return true end
+	for i=safmin,safmax-1 do
+      local saffile = "SAF" .. i
+      if terminal.FileExist(saffile) then
+        local fld2= terminal.GetJsonValue(saffile,"2")
+		sumof_saf = samof_saf + tonumber(fld2)
+		end
+	end
+	if sumof_saf + (amt or txn.totalamt) > limit_amt then txn.toomany_saf = true; return true end
+	return txn.toomany_saf
 end
 
 function trans_keys()
@@ -797,7 +767,7 @@ function prepare_txn_req()
     local msg_flds = {}
 	local msgid = txn.rc and txn.rc == "Y1" and "220" or "200"
 	txn.mti = msgid
-    local proccode = ""
+    local proccode = "00"
 
 	local retmsg = nil
 	local rev_exist = config.safsign and string.find(config.safsign,"+")
@@ -810,12 +780,7 @@ function prepare_txn_req()
 		txn.pinblock = terminal.PinBlockCba(config.key_card,config.key_pin,pan,"0")
 	end
 	
-    if txn.func == "PRCH" then  if txn.cashamt > 0 then proccode = "09" else proccode = "00" end
-    elseif txn.func == "CASH" then  proccode = "01"
-    elseif txn.func == "RFND" then  proccode = "20"
-    elseif txn.func == "AUTH" then  proccode = "30" ; msgid = "100"
-    elseif txn.func == "COMP" then  proccode = "00" ; msgid = "220"
-    elseif txn.func == "VOID" then  proccode = "02"   end
+    if txn.func == "PRCH" then proccode = "00" end
     table.insert(msg_flds,"0:"..msgid)
     if txn.pan then table.insert(msg_flds,"2:"..txn.pan) end
     if txn.account == "SAVINGS" then proccode = proccode .. "1000"
@@ -874,7 +839,6 @@ function prepare_txn_req()
 	  local t9f53 =""
 	  local tlvs = ""
 	  if txn.ctls == "CTLS_E" then
-			local TxnTlvs = txn.TLVs
 			local EMV5000 = ""
 			local EMV9f02 = ""
 			local EMV9f03 = ""
@@ -891,13 +855,16 @@ function prepare_txn_req()
 			local EMV5f2a = ""
 			local EMV9a00 = ""
 			local EMV9c00 = ""
+			local EMV9f35 = ""
 			local EMV9f37 = ""
+			local EMV8400 = ""
 			local tagvalue = ""
 			tagvalue = get_value_from_tlvs("5000")
 			EMV5000 = "50".. string.format("%02X",#tagvalue/2) .. tagvalue
 			tagvalue = get_value_from_tlvs("9F02")
 			EMV9f02 = "9F02"..string.format("%02X",#tagvalue/2)  .. tagvalue
 			tagvalue = get_value_from_tlvs("9F03")
+			if tagvalue =="" then tagvalue = "000000000000" end
 			EMV9f03 = "9F03"..string.format("%02X",#tagvalue/2)  .. tagvalue
 			tagvalue = get_value_from_tlvs("9F26")
 			EMV9f26 = "9F26"..string.format("%02X",#tagvalue/2) .. tagvalue
@@ -924,12 +891,17 @@ function prepare_txn_req()
 			EMV9a00 = "9A".. string.format("%02X",#tagvalue/2) .. tagvalue
 			tagvalue = get_value_from_tlvs("9C00")
 			EMV9c00 = "9C".. string.format("%02X",#tagvalue/2) .. tagvalue
+			tagvalue = get_value_from_tlvs("9F35")
+			if tagvalue == "" then tagvalue = "22" end
+			EMV9f35 = "9F35"..string.format("%02X",#tagvalue/2)  .. tagvalue
 			tagvalue = get_value_from_tlvs("9F37")
 			EMV9f37 = "9F37"..string.format("%02X",#tagvalue/2) .. tagvalue
+			tagvalue = get_value_from_tlvs("8400")
+			EMV8400 = "84"..string.format("%02X",#tagvalue/2) .. tagvalue
 
-			tlvs=tlvs..EMV9f02..EMV9f03..EMV9f26..EMV8200..EMV9f36..EMV9f34..EMV9f27..EMV9f1e..EMV9f10..EMV9f33..EMV9f1a..EMV9500..EMV5f2a..EMV9a00..EMV9c00..EMV9f37
+			tlvs=tlvs..EMV9f02..EMV9f03..EMV9f26..EMV8200..EMV9f36..EMV9f34..EMV9f27..EMV9f1e..EMV9f10..EMV9f33..EMV9f1a..EMV9500..EMV5f2a..EMV9a00..EMV9c00..EMV9f35..EMV9f37..EMV8400
 	  else
-      tlvs = terminal.EmvPackTLV("9F02".."9F03".."9F26".."8200".."9F36".."9F34".."9F27".."9F10".."9F33".."9F1A".."9500".."5F2A".."9A00".."9C00".."9F35".."9F37").."9F1E08"..terminal.HexToString(string.sub(config.serialno,-8))
+      tlvs = terminal.EmvPackTLV("9F02".."9F03".."9F26".."8200".."9F36".."9F34".."9F27".."9F10".."9F33".."9F1A".."9500".."5F2A".."9A00".."9C00".."9F35".."9F37".."8400").."9F1E08"..terminal.HexToString(string.sub(config.serialno,-8))
 	  end
       txn.emv.tlv = tlvs
       table.insert(msg_flds,"55:" ..tlvs)
@@ -952,7 +924,7 @@ end
 function do_obj_txn_req()
 	local as2805msg,retmsg = prepare_txn_req()
 	if retmsg then
-		if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv then
+		if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
 			txn.offline = true
 			return do_obj_offline_check()
 		else
@@ -976,10 +948,16 @@ function do_obj_txn_req()
 		retmsg = tcpsend(as2805msg)
 		if retmsg ~= "NOERROR" then 
 			if retmsg == "NO_RESPONSE" or retmsg == "TIMEOUT" then copy_txn_to_saf() end
-			if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv then
+			if  txn.chipcard and not txn.ctls and not txn.emv.fallback and not txn.earlyemv then
 				txn.offline = true
 				return do_obj_offline_check()
-			else txn.tcperror = true 
+			elseif (retmsg == "NO_RESPONSE" or retmsg == "TIMEOUT" or retmsg =="TESTING") and check_efb() then
+				txn.rc = "00" 
+				txn.efb = true
+				generate_saf()
+				return do_obj_txn_ok()
+			else 
+				txn.tcperror = true 
 				return do_obj_txn_nok(retmsg)
 			end
 		else return do_obj_txn_resp()
@@ -999,9 +977,14 @@ function do_obj_txn_resp()
 	 return do_obj_txn_nok("MAC") -- mac error
   elseif errmsg ~= "NOERROR" or not rcvmsg or rcvmsg == "" then 
 	if errmsg == "NOERROR" then errmsg = "NO_RESPONSE" end
-	if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv then
+	if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
 		txn.offline = true
 		return do_obj_offline_check()
+	elseif errmsg == "TIMEOUT" and check_efb() then
+		txn.rc = "00" 
+		txn.efb = true
+		generate_saf()
+		return do_obj_txn_ok()
 	else txn.tcperror = true
 		return do_obj_txn_nok(errmsg)
 	end
@@ -1014,6 +997,14 @@ function do_obj_txn_resp()
     if fld39 and #fld39>0 then txn.rc = fld39 end
 
     if errmsg ~= "NOERROR" then return do_obj_txn_nok(errmsg)  -- as2805 error
+	elseif fld39 == "91" and txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
+		txn.offline = true
+		return do_obj_offline_check()
+	elseif fld39 == "91" and check_efb() then
+		txn.rc = "00" 
+		txn.efb = true
+		generate_saf()
+		return do_obj_txn_ok()
     elseif fld39 ~= "00" and fld39 ~= "08" then 
       local HOST_DECLINED = 2
       if not txn.ctls and txn.chipcard and not txn.emv.fallback and not txn.earlyemv then terminal.EmvUseHostData(HOST_DECLINED,fld55) end
@@ -1059,7 +1050,7 @@ function do_obj_txn_resp()
 end
 
 function do_obj_txn_ok()
-    local signflag = ( not ( txn.ctls and txn.chipcard) and txn.pinblock_flag == "NOPIN" or txn.ctlsPin == "1" or txn.ctlsPin == "3" or ( txn.rc == "08" or (txn.chipcard and terminal.EmvGlobal("GET","SIGN")) or txn.pan))
+    local signflag = ( not ( txn.ctls and txn.chipcard) and txn.pinblock_flag == "NOPIN" or txn.ctlsPin == "1" or txn.ctlsPin == "3" or ( txn.rc == "08" or (txn.chipcard and terminal.EmvGlobal("GET","SIGN")) or txn.pan) or txn.efb)
 	local scrlines,resultstr = "",""
 	scrlines =  "WIDELBL,,30,2,C;" .."WIDELBL,,147,4,C;" 
 	if signflag and txn.rc == "00" then txn.rc = "08" elseif not signflag and txn.rc == "08" then txn.rc = "00" end
@@ -1102,9 +1093,9 @@ function update_total()
 	local cardname = txn.cardname
 	if txn.account ~= "CREDIT" then cardname = "DEBIT" end
     local prchnum,prchamt=terminal.GetJsonValueInt("SHFT","PRCHNUM","PRCHAMT")
-    local cr_s_num,cr_s_amt,cr_r_num,cr_r_amt,dr_s_num,dr_s_amt,dr_r_num,dr_r_amt,auth_s_num,auth_s_amt,auth_r_num,auth_r_amt,card_prch_num,card_prch_amt,card_rfnd_num,card_rfnd_amt=
-	terminal.GetJsonValueInt("SHFTSTTL","CR_PRCHNUM","CR_PRCHAMT","CR_RFNDNUM","CR_RFNDAMT","DR_PRCHNUM","DR_PRCHAMT","DR_RFNDNUM","DR_RFNDAMT","AUTH_PRCHNUM","AUTH_PRCHAMT","AUTH_RFNDNUM","AUTH_RFNDAMT",cardname.."_PRCHNUM",cardname.."_PRCHAMT",cardname.."_RFNDNUM",cardname.."_RFNDAMT")
-    if txn.prchamt>0 and (txn.func == "PRCH" or txn.func == "COMP") then
+    local cr_s_num,cr_s_amt,dr_s_num,dr_s_amt,card_prch_num,card_prch_amt=
+	terminal.GetJsonValueInt("SHFTSTTL","CR_PRCHNUM","CR_PRCHAMT","DR_PRCHNUM","DR_PRCHAMT",cardname.."_PRCHNUM",cardname.."_PRCHAMT")
+    if txn.prchamt>0 and txn.func == "PRCH" then
       terminal.SetJsonValue("SHFT","PRCHAMT",prchamt+txn.prchamt)
       terminal.SetJsonValue("SHFT","PRCHNUM",prchnum+1)
 	end
@@ -1217,6 +1208,37 @@ function copy_txn_to_saf()
 	end
 end
 
+function check_efb()
+	if not config.efb then return false end
+	if  toomany_saf() then return false end
+	if txn.emv and txn.emv.expdate and #txn.emv.expdate == 6 then
+		local currdate = terminal.Time( "YYMMDD") 
+		if tonumber(currdate) > tonumber(txn.emv.expdate) then
+			return false
+		end
+	end
+	if txn.chipcard and not txn.earlyemv and not txn.emv.fallback and not txn.ctls then --chip
+		return false
+	elseif txn.track2 then
+		return true
+	elseif txn.ctls == "CTLS_E" or txn.ctls == "CTLS_S" then
+		local expdate = get_value_from_tlvs("5F24")
+		local currdate = terminal.Time( "YYMMDD") 
+		if #expdate == 6 and tonumber(currdate) > tonumber(expdate) then
+			return false
+		end
+		local EMV9f06 = get_value_from_tlvs("9F06")
+		if EMV9f06 == "" then EMV9f06 = get_value_from_tlvs("8400") end
+		local tlimit,climit,flimit = terminal.CTLSEmvGetLimit(EMV9f06)
+		if flimit > 0 and txn.totalamt >flimit then return false end
+		return true
+	elseif txn.emv.fallback then
+		return true
+	elseif txn.earlyemv then
+		return true
+	end
+end
+
 function do_obj_txn_nok(tcperrmsg)
   local errcode,errmsg,errline2 = "","",""
   if not txn.rc then txn.rc = "W21" end
@@ -1227,6 +1249,7 @@ function do_obj_txn_nok(tcperrmsg)
     errmsg = cba_errorcode(rc)
   end
   local evt,itimeout = EVT.TIMEOUT, ScrnTimeoutHF
+  
   if txn.ctls and txn.rc == "65" then 
 	errline2 = "WIDELBL,THIS,PLEASE INSERT CARD,4,C;"
 	evt = EVT.SCT_IN+EVT.TIMEOUT
@@ -1781,7 +1804,7 @@ function get_emv_print_tags(debugprint)
 	end
 	local prttags = "\\n\\3"
 	local tac_default,tac_denial,tac_online, iac_default,iac_denial,iac_online ="","","","","",""
-	local f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00
+	local f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00,f9f1b
 	if txn.ctls and txn.chipcard then
 			local f9f06 = get_value_from_tlvs("9F06")
 			if f9f06 == "" then f9f06 = get_value_from_tlvs("8400") end
@@ -1799,8 +1822,8 @@ function get_emv_print_tags(debugprint)
 			iac_denial = get_value_from_tlvs("9F0E")
 			iac_online = get_value_from_tlvs("9F0F")
 	else
-		f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00 =
-     	terminal.EmvGetTagData(0x9F27,0x9F10,0x9F37,0x9F02,0x5F2A,0x8200,0x9F1A,0x9F34,0x9B00) 
+		f9f27,f9f10,f9f37,f9f02,f5f2a,f8200,f9f1a,f9f34,f9b00,f9f1b =
+     	terminal.EmvGetTagData(0x9F27,0x9F10,0x9F37,0x9F02,0x5F2A,0x8200,0x9F1A,0x9F34,0x9B00,0x9f1b) 
 			
 		tac_default,tac_denial,tac_online, iac_default,iac_denial,iac_online = terminal.EmvGetTacIac()
 	end
@@ -1820,6 +1843,7 @@ function get_emv_print_tags(debugprint)
 	prttags = prttags.."TRAN CURRENCY:\\R".. f5f2a.."\\n"
 	prttags = prttags.."TERM COUNTRY:\\R".. f9f1a.."\\n"
 	prttags = prttags.."AMOUNT OTHER:\\R".. string.format("$%.2f",i9f03/100).."\\n"
+	prttags = prttags.."FLOOR LMT:\\R".. f9f1b.."\\n"
 
 	return(prttags)
 end
@@ -1836,7 +1860,8 @@ function get_ipay_print_nok(who,result_str)
   end
   local cardentry = ""
   local AvlOfSpdAmt = ""
-  if txn.ctls then cardentry = "(c)"
+  if txn.efb then cardentry = "(efb)"
+  elseif txn.ctls then cardentry = "(c)"
   elseif txn.pan then cardentry = "(m)"
   elseif txn.chipcard and txn.emv.fallback then cardentry = "(f)"
   elseif txn.chipcard then cardentry = "(i)"
@@ -1845,7 +1870,6 @@ function get_ipay_print_nok(who,result_str)
 	local prttags = ""
 	if txn.ctls then
 		if txn.chipcard then
-			local TxnTlvs = txn.TLVs
 			local EMV9f26 = get_value_from_tlvs("9F26")
 			local EMV9f5d = get_value_from_tlvs("9F5D")
 			local EMV9f06 = get_value_from_tlvs("9F06")
@@ -1922,7 +1946,8 @@ function get_ipay_print(who,result_ok,result_str)
 	local fullpan =  txn.pan
 	local s_pan = txn.fullpan and ( fullpan and txn.fullpan or string.rep(".",10) .. string.sub(txn.fullpan,-4)) or ""
 	local cardentry = ""
-	if txn.ctls then cardentry = "(c)"
+	if txn.efb then cardentry = "(efb)"
+	elseif txn.ctls then cardentry = "(c)"
 	elseif txn.pan then cardentry = "(m)"
 	elseif txn.chipcard and txn.emv.fallback then cardentry = "(f)"
 	elseif txn.chipcard then cardentry = "(i)"
@@ -1937,7 +1962,6 @@ function get_ipay_print(who,result_ok,result_str)
 	local prt_emv = ""
 	if txn.ctls then
 		if txn.chipcard then
-			local TxnTlvs = txn.TLVs
 			local EMV9f26 = get_value_from_tlvs("9F26")
 			local EMV9f5d = get_value_from_tlvs("9F5D")
 			local EMV9f06 = get_value_from_tlvs("9F06")
@@ -2272,7 +2296,7 @@ function do_obj_gprs_register(nextfunc)
   if nextfunc then return nextfunc() else return 0 end
 end
 
-function swipecheck(track2)
+function swipecheck(track2,fallback)
   if track2 == nil or #track2 < 11 or callback.mcr_func == nil then terminal.ErrorBeep(); return -1 end
 
   local _,_,pan,panetc = string.find(track2, "(%d*)=(%d*)")
@@ -2304,20 +2328,19 @@ function swipecheck(track2)
   local cardname = terminal.TextTable("CARD_NAME",cardname_prefix)
 
   local chipflag = (panetc and string.sub(panetc,5,5) or "")
-  if chipflag == "2" or chipflag == "6" then
+  if not fallback and (chipflag == "2" or chipflag == "6") then
     terminal.ErrorBeep(); return 0
   end
 
   return 1,cardname
 end
 
-
 function debugPrint(msg)
 	local maxlen = #msg
-	local idx = 0
+	local idx = 1
 	while true do
-		terminal.Print("\\4"..string.sub(msg, idx, idx+199).."\\n", false)
-		idx = idx + 200
+		terminal.Print("\\4"..string.sub(msg, idx, idx+125).."\\n", false)
+		idx = idx + 126
 		if idx > maxlen then break end
 	end
 	terminal.Print("\\n", true)

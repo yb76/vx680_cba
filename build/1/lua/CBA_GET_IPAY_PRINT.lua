@@ -9,7 +9,8 @@ function get_ipay_print(who,result_ok,result_str)
 	local fullpan =  txn.pan
 	local s_pan = txn.fullpan and ( fullpan and txn.fullpan or string.rep(".",10) .. string.sub(txn.fullpan,-4)) or ""
 	local cardentry = ""
-	if txn.ctls then cardentry = "(c)"
+	if txn.efb then cardentry = "(efb)"
+	elseif txn.ctls then cardentry = "(c)"
 	elseif txn.pan then cardentry = "(m)"
 	elseif txn.chipcard and txn.emv.fallback then cardentry = "(f)"
 	elseif txn.chipcard then cardentry = "(i)"
@@ -24,7 +25,6 @@ function get_ipay_print(who,result_ok,result_str)
 	local prt_emv = ""
 	if txn.ctls then
 		if txn.chipcard then
-			local TxnTlvs = txn.TLVs
 			local EMV9f26 = get_value_from_tlvs("9F26")
 			local EMV9f5d = get_value_from_tlvs("9F5D")
 			local EMV9f06 = get_value_from_tlvs("9F06")

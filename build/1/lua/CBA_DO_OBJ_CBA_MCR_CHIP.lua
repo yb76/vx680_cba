@@ -18,7 +18,6 @@ function do_obj_cba_mcr_chip()
       local screvent,_ = terminal.DisplayObject(scrlines,scrkeys,screvents,ScrnTimeout)
       if screvent ~= "CHIP_CARD_IN" then nextstep = do_obj_txn_finish 
       else txn.chipcard = true end
-	 
     end
   elseif ok then txn.chipcard = true end
   return nextstep()

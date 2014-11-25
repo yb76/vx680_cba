@@ -4,13 +4,10 @@ function do_obj_swipecard()
   local screvents = EVT.TIMEOUT+EVT.MCR+EVT.SCT_IN
   local cardreject = false
   if txn.emv_retry then scrlines = "WIDELBL,THIS,INSERT CARD,2,C;"; screvents = EVT.TIMEOUT+EVT.SCT_IN end
-
-  if txn.chipcard and txn.emv.fallback then
-    scrlines = "WIDELBL,THIS,SWIPE CARD,2,C;"
-    scrkeys  = KEY.CNCL
-    screvents = EVT.TIMEOUT+EVT.MCR
-  elseif txn.swipefirst == 1 and not txn.ctls and not txn.cardname then
-    local swipeflag,cardname = swipecheck( txn.track2)
+  if txn.chipcard and txn.emv.fallback then scrlines = "WIDELBL,THIS,SWIPE CARD,2,C;"; screvents = EVT.TIMEOUT+EVT.MCR end
+  
+  if txn.swipefirst == 1 and not txn.ctls and not txn.cardname then
+    local swipeflag,cardname = swipecheck(txn.track2,txn.chipcard and txn.emv.fallback)
 	if swipeflag < 0 then cardreject = true
 	elseif swipeflag == 0 then
       scrlines = "WIDELBL,THIS,INSERT CARD,2,C;"
@@ -35,7 +32,7 @@ function do_obj_swipecard()
       txn.track2 = terminal.GetTrack(2)
       if txn.track2 == nil or #txn.track2 < 11 then return do_obj_swipecard()
       elseif not txn.emv.fallback then txn.swipefirst = 1;return do_obj_swipecard() -- double check the chipflag
-      elseif txn.totalamt then return do_obj_account() 
+      elseif txn.totalamt then return do_obj_account() --emvfallback
 	  else txn.swipefirst = 1; return do_obj_prchamount() end
     elseif screvent == "TIME" then
       return do_obj_trantimeout()

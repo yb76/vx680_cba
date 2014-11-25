@@ -2,7 +2,7 @@ function prepare_txn_req()
     local msg_flds = {}
 	local msgid = txn.rc and txn.rc == "Y1" and "220" or "200"
 	txn.mti = msgid
-    local proccode = ""
+    local proccode = "00"
 
 	local retmsg = nil
 	local rev_exist = config.safsign and string.find(config.safsign,"+")
@@ -15,12 +15,7 @@ function prepare_txn_req()
 		txn.pinblock = terminal.PinBlockCba(config.key_card,config.key_pin,pan,"0")
 	end
 	
-    if txn.func == "PRCH" then  if txn.cashamt > 0 then proccode = "09" else proccode = "00" end
-    elseif txn.func == "CASH" then  proccode = "01"
-    elseif txn.func == "RFND" then  proccode = "20"
-    elseif txn.func == "AUTH" then  proccode = "30" ; msgid = "100"
-    elseif txn.func == "COMP" then  proccode = "00" ; msgid = "220"
-    elseif txn.func == "VOID" then  proccode = "02"   end
+    if txn.func == "PRCH" then proccode = "00" end
     table.insert(msg_flds,"0:"..msgid)
     if txn.pan then table.insert(msg_flds,"2:"..txn.pan) end
     if txn.account == "SAVINGS" then proccode = proccode .. "1000"
@@ -79,7 +74,6 @@ function prepare_txn_req()
 	  local t9f53 =""
 	  local tlvs = ""
 	  if txn.ctls == "CTLS_E" then
-			local TxnTlvs = txn.TLVs
 			local EMV5000 = ""
 			local EMV9f02 = ""
 			local EMV9f03 = ""
@@ -96,13 +90,16 @@ function prepare_txn_req()
 			local EMV5f2a = ""
 			local EMV9a00 = ""
 			local EMV9c00 = ""
+			local EMV9f35 = ""
 			local EMV9f37 = ""
+			local EMV8400 = ""
 			local tagvalue = ""
 			tagvalue = get_value_from_tlvs("5000")
 			EMV5000 = "50".. string.format("%02X",#tagvalue/2) .. tagvalue
 			tagvalue = get_value_from_tlvs("9F02")
 			EMV9f02 = "9F02"..string.format("%02X",#tagvalue/2)  .. tagvalue
 			tagvalue = get_value_from_tlvs("9F03")
+			if tagvalue =="" then tagvalue = "000000000000" end
 			EMV9f03 = "9F03"..string.format("%02X",#tagvalue/2)  .. tagvalue
 			tagvalue = get_value_from_tlvs("9F26")
 			EMV9f26 = "9F26"..string.format("%02X",#tagvalue/2) .. tagvalue
@@ -129,12 +126,17 @@ function prepare_txn_req()
 			EMV9a00 = "9A".. string.format("%02X",#tagvalue/2) .. tagvalue
 			tagvalue = get_value_from_tlvs("9C00")
 			EMV9c00 = "9C".. string.format("%02X",#tagvalue/2) .. tagvalue
+			tagvalue = get_value_from_tlvs("9F35")
+			if tagvalue == "" then tagvalue = "22" end
+			EMV9f35 = "9F35"..string.format("%02X",#tagvalue/2)  .. tagvalue
 			tagvalue = get_value_from_tlvs("9F37")
 			EMV9f37 = "9F37"..string.format("%02X",#tagvalue/2) .. tagvalue
+			tagvalue = get_value_from_tlvs("8400")
+			EMV8400 = "84"..string.format("%02X",#tagvalue/2) .. tagvalue
 
-			tlvs=tlvs..EMV9f02..EMV9f03..EMV9f26..EMV8200..EMV9f36..EMV9f34..EMV9f27..EMV9f1e..EMV9f10..EMV9f33..EMV9f1a..EMV9500..EMV5f2a..EMV9a00..EMV9c00..EMV9f37
+			tlvs=tlvs..EMV9f02..EMV9f03..EMV9f26..EMV8200..EMV9f36..EMV9f34..EMV9f27..EMV9f1e..EMV9f10..EMV9f33..EMV9f1a..EMV9500..EMV5f2a..EMV9a00..EMV9c00..EMV9f35..EMV9f37..EMV8400
 	  else
-      tlvs = terminal.EmvPackTLV("9F02".."9F03".."9F26".."8200".."9F36".."9F34".."9F27".."9F10".."9F33".."9F1A".."9500".."5F2A".."9A00".."9C00".."9F35".."9F37").."9F1E08"..terminal.HexToString(string.sub(config.serialno,-8))
+      tlvs = terminal.EmvPackTLV("9F02".."9F03".."9F26".."8200".."9F36".."9F34".."9F27".."9F10".."9F33".."9F1A".."9500".."5F2A".."9A00".."9C00".."9F35".."9F37".."8400").."9F1E08"..terminal.HexToString(string.sub(config.serialno,-8))
 	  end
       txn.emv.tlv = tlvs
       table.insert(msg_flds,"55:" ..tlvs)

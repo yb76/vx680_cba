@@ -2,19 +2,14 @@ function do_obj_transdial()
   local emvok,emvret = true,0
   local tcpreturn = ""
   local nextstep = nil
-  
   if not txn.ctls and txn.chipcard and not txn.emv.fallback then
     if not txn.earlyemv then
 	  if terminal.EmvIsCardPresent() then
 		local acc = (txn.account=="SAVINGS" and 0x10 or txn.account == "CHEQUE" and 0x20 or txn.account=="CREDIT" and 0x30)
-		if emvret == 0 then
-			emvret = terminal.EmvSetAccount(acc) end
-		if emvret == 0 then
-			emvret = terminal.EmvDataAuth() end
- 		if emvret == 0 then
-			emvret = terminal.EmvProcRestrict() end
- 		if emvret == 0 then
-			emvret = terminal.EmvCardholderVerify() end
+		if emvret == 0 then emvret = terminal.EmvSetAccount(acc) end
+		if emvret == 0 then emvret = terminal.EmvDataAuth() end
+ 		if emvret == 0 then emvret = terminal.EmvProcRestrict() end
+ 		if emvret == 0 then emvret = terminal.EmvCardholderVerify() end
  		if emvret == 0 then emvret = terminal.EmvProcess1stAC() end
  		if emvret == 137 then --ONLINE_REQUEST
 		elseif emvret == 150 or emvret == 133  then -- TRANS_APPROVED or OFFLINE_APPROVED
@@ -43,7 +38,7 @@ function do_obj_transdial()
 						txn.rc = "W21"
 						return do_obj_txn_nok("CONNECT")
 				  end
-			elseif txn.CTEMVRS == "W30" or txn.CTEMVRS == " 0" and toomany_saf() then -- Ofline Auth
+			elseif txn.CTEMVRS == "W30" then -- Ofline Auth
 				txn.rc = "W30"
 				txn.tcperror = true
 				return do_obj_txn_nok("SAF LIMIT EXCEEDED")
@@ -77,7 +72,7 @@ function do_obj_transdial()
       if tcpreturn == "NOERROR" then 
 		return do_obj_transstart()
 	  else 
-		if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv then
+		if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
 			txn.offline = true
 			local as2805msg = prepare_txn_req()
 			return do_obj_offline_check()
@@ -86,10 +81,6 @@ function do_obj_transdial()
 			return do_obj_txn_nok("CONNECT")
 		end
 	  end
-  elseif ( emvret == 150 or emvret == 133 ) and toomany_saf() then
-	txn.rc = "W30"
-	txn.tcperror = true
-	return do_obj_txn_nok("SAF LIMIT EXCEEDED")
   elseif emvret == 150 or emvret == 133 then
     txn.rc = "Y1"
 	local as2805msg = prepare_txn_req()

@@ -10,9 +10,14 @@ function do_obj_txn_resp()
 	 return do_obj_txn_nok("MAC") -- mac error
   elseif errmsg ~= "NOERROR" or not rcvmsg or rcvmsg == "" then 
 	if errmsg == "NOERROR" then errmsg = "NO_RESPONSE" end
-	if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv then
+	if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
 		txn.offline = true
 		return do_obj_offline_check()
+	elseif errmsg == "TIMEOUT" and check_efb() then
+		txn.rc = "00" 
+		txn.efb = true
+		generate_saf()
+		return do_obj_txn_ok()
 	else txn.tcperror = true
 		return do_obj_txn_nok(errmsg)
 	end
@@ -25,6 +30,14 @@ function do_obj_txn_resp()
     if fld39 and #fld39>0 then txn.rc = fld39 end
 
     if errmsg ~= "NOERROR" then return do_obj_txn_nok(errmsg)  -- as2805 error
+	elseif fld39 == "91" and txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
+		txn.offline = true
+		return do_obj_offline_check()
+	elseif fld39 == "91" and check_efb() then
+		txn.rc = "00" 
+		txn.efb = true
+		generate_saf()
+		return do_obj_txn_ok()
     elseif fld39 ~= "00" and fld39 ~= "08" then 
       local HOST_DECLINED = 2
       if not txn.ctls and txn.chipcard and not txn.emv.fallback and not txn.earlyemv then terminal.EmvUseHostData(HOST_DECLINED,fld55) end
