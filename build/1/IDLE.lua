@@ -165,7 +165,7 @@ function init_config()
   if config.stan == "" then config.stan= "000001"; terminal.SetJsonValue("CONFIG","STAN", config.stan) end
   if config.saf_limit == "" then config.saf_limit = 10; terminal.SetJsonValue("CONFIG","SAF_LIMIT","10") else config.saf_limit = tonumber(config.saf_limit) end
   if config.saf_limit_amt == "" then config.saf_limit_amt = 20000; terminal.SetJsonValue("CONFIG","SAF_LIMIT_AMT","20000") else config.saf_limit_amt = tonumber(config.saf_limit_amt) end
-  if config.efb ~= "NO" then config.efb = true end 
+  if config.efb == "NO" then config.efb = nil else config.efb = true end 
   config.hip,config.port,config.apn,config.tcptimeout,config.aiic = terminal.GetJsonValue("CONFIG","HIP0","PORT0","APN","BANKTCPTIMEOUT","AIIC")
   config.timeadjust = terminal.GetJsonValue("iTAXI_CFG","RISTIMEOFFSET")
  

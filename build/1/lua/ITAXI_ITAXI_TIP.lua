@@ -34,6 +34,7 @@ function itaxi_tip()
     taxi.meter = taxi.meter + taxi.tip
     taxi.subtotal = taxi.meter + taxi.otherchg
     taxi.serv_gst = taxi.serv_gst + tip_gst - taxi.tip
+	taxi.tipgst = tip_gst
   end
   
   if screvent == "KEY_CLR" or screvent == "TIME" or screvent == "CANCEL" then

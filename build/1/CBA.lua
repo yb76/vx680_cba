@@ -980,7 +980,7 @@ function do_obj_txn_resp()
 	if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
 		txn.offline = true
 		return do_obj_offline_check()
-	elseif errmsg == "TIMEOUT" and check_efb() then
+	elseif ( errmsg == "TIMEOUT" or errmsg == "NO_RESPONSE" ) and check_efb() then
 		txn.rc = "00" 
 		txn.efb = true
 		generate_saf()
@@ -1548,7 +1548,7 @@ function tcpconnect()
 end
 
 function tcpsend(msg)
-  if config.no_online then config.no_online = nil; return "TESTING" end -- TESTING
+  --if config.no_online then config.no_online = nil; return "TESTING" end -- TESTING
   local tcperrmsg = ""
   tcperrmsg = terminal.TcpSend("6000013000"..msg)
   txn.tcpsent = true
@@ -1572,6 +1572,8 @@ function tcprecv()
   if config.tcptimeout == "" then timeout = 30 end
   local mac_ok = true
   tcperrmsg,rcvmsg = terminal.TcpRecv(chartimeout,timeout)
+  if config.no_online then config.no_online = nil; tcperrmsg="COMMS ERROR" end -- TESTING
+  if tcperrmsg ~= "NOERROR" and tcperrmsg ~= "NO_RESPONSE" and tcperrmsg ~= "TIMEOUT" then tcperrmsg = "NO_RESPONSE" end
   
   if #rcvmsg > 10 then rcvmsg = string.sub(rcvmsg,11) end
   if #rcvmsg > 10 then
@@ -1843,7 +1845,7 @@ function get_emv_print_tags(debugprint)
 	prttags = prttags.."TRAN CURRENCY:\\R".. f5f2a.."\\n"
 	prttags = prttags.."TERM COUNTRY:\\R".. f9f1a.."\\n"
 	prttags = prttags.."AMOUNT OTHER:\\R".. string.format("$%.2f",i9f03/100).."\\n"
-	prttags = prttags.."FLOOR LMT:\\R".. f9f1b.."\\n"
+	prttags = prttags.."FLOOR LMT:\\R".. (f9f1b or " ").."\\n"
 
 	return(prttags)
 end

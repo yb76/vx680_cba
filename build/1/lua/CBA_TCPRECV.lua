@@ -4,6 +4,8 @@ function tcprecv()
   if config.tcptimeout == "" then timeout = 30 end
   local mac_ok = true
   tcperrmsg,rcvmsg = terminal.TcpRecv(chartimeout,timeout)
+  if config.no_online then config.no_online = nil; tcperrmsg="COMMS ERROR" end -- TESTING
+  if tcperrmsg ~= "NOERROR" and tcperrmsg ~= "NO_RESPONSE" and tcperrmsg ~= "TIMEOUT" then tcperrmsg = "NO_RESPONSE" end
   
   if #rcvmsg > 10 then rcvmsg = string.sub(rcvmsg,11) end
   if #rcvmsg > 10 then

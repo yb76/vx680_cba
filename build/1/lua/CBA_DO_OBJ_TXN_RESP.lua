@@ -13,7 +13,7 @@ function do_obj_txn_resp()
 	if  txn.chipcard and not txn.emv.fallback and not txn.earlyemv and not txn.ctls then
 		txn.offline = true
 		return do_obj_offline_check()
-	elseif errmsg == "TIMEOUT" and check_efb() then
+	elseif ( errmsg == "TIMEOUT" or errmsg == "NO_RESPONSE" ) and check_efb() then
 		txn.rc = "00" 
 		txn.efb = true
 		generate_saf()

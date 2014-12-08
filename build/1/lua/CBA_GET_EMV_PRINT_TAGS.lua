@@ -44,7 +44,7 @@ function get_emv_print_tags(debugprint)
 	prttags = prttags.."TRAN CURRENCY:\\R".. f5f2a.."\\n"
 	prttags = prttags.."TERM COUNTRY:\\R".. f9f1a.."\\n"
 	prttags = prttags.."AMOUNT OTHER:\\R".. string.format("$%.2f",i9f03/100).."\\n"
-	prttags = prttags.."FLOOR LMT:\\R".. f9f1b.."\\n"
+	prttags = prttags.."FLOOR LMT:\\R".. (f9f1b or " ").."\\n"
 
 	return(prttags)
 end
