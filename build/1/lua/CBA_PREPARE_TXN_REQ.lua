@@ -94,6 +94,7 @@ function prepare_txn_req()
 			local EMV9f37 = ""
 			local EMV8400 = ""
 			local tagvalue = ""
+
 			tagvalue = get_value_from_tlvs("5000")
 			EMV5000 = "50".. string.format("%02X",#tagvalue/2) .. tagvalue
 			tagvalue = get_value_from_tlvs("9F02")

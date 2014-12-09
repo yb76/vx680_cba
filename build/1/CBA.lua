@@ -317,7 +317,7 @@ function get_cardinfo()
 			local tag9f6c_2 = #EMV9F6C>0 and tonumber(string.sub( EMV9F6C,3,4),16) or 0
 			
 			local pinflag = hasbit(tag9f6c_1,bit(8)) 
-			local signflag = hasbit(tag9f6c_1,bit(7)) or (--[[txn.totalamt >= txn.cvmlimit and]] EMV9F6C =="") --boyang TESTING
+			local signflag = hasbit(tag9f6c_1,bit(7)) -- or ([[txn.totalamt >= txn.cvmlimit and]] EMV9F6C =="") --boyang TESTING
 			if pinflag or signflag then
 				if pinflag and config.no_pin then
 					txn.rc = "W31"
@@ -859,6 +859,7 @@ function prepare_txn_req()
 			local EMV9f37 = ""
 			local EMV8400 = ""
 			local tagvalue = ""
+
 			tagvalue = get_value_from_tlvs("5000")
 			EMV5000 = "50".. string.format("%02X",#tagvalue/2) .. tagvalue
 			tagvalue = get_value_from_tlvs("9F02")
