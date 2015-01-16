@@ -10,7 +10,7 @@ function do_obj_txn_nok(tcperrmsg)
   local evt,itimeout = EVT.TIMEOUT, ScrnTimeoutHF
   
   if txn.ctls and txn.rc == "65" then 
-	errline2 = "WIDELBL,THIS,PLEASE INSERT CARD,4,C;"
+	errline2 = "WIDELBL,THIS,PLEASE INSERT CARD,5,C;"
 	evt = EVT.SCT_IN+EVT.TIMEOUT
 	itimeout = 15000
   end

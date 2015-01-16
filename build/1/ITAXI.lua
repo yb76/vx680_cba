@@ -360,7 +360,9 @@ function itaxi_ctls_tran()
         taxi.tlvs = tlvs
         taxi.chipcard = true 
         return itaxi_pay_swipe()        
-    elseif emvres == "99" or emvres == "10" or emvres =="-1025" then 
+    elseif emvres == "98" then 
+		return itaxi_ctls_tran()
+    elseif emvres == "99" or --[[emvres == "10" or]] emvres =="-1025" then 
         if emvres == "-1025" then terminal.DisplayObject("WIDELBL,THIS,NO CONTACTLESS,3,C;".. 
           "WIDELBL,THIS,FOR AMOUNT >".. string.format("%.2f",translimit/100.0) ..",5,C;",KEY.OK,EVT.TIMEOUT,2000) end
         return itaxi_paymentmethod()
@@ -369,11 +371,11 @@ function itaxi_ctls_tran()
 		return itaxi_pay_swipe()
 	else
         terminal.ErrorBeep()
-        if emvres == "-13" then
+        if emvres == "-13" or emvres == "-1" then
             if terminal.EmvIsCardPresent() then terminal.DisplayObject("WIDELBL,THIS,REMOVE CARD,3,C;",0,EVT.SCT_OUT,0)
-            else    terminal.DisplayObject("WIDELBL,THIS,TRAN CANCELLED,3,C;",0,EVT.TIMEOUT,500)
+            else    terminal.DisplayObject("WIDELBL,THIS,TRAN CANCELLED,3,C;",KEY.OK+KEY.CNCL,EVT.TIMEOUT,5000)
             end
-        else    terminal.DisplayObject("WIDELBL,THIS,CARD ERROR,3,C;",0,EVT.TIMEOUT,500)
+        else    terminal.DisplayObject("WIDELBL,THIS,CARD ERROR,3,C;",KEY.OK+KEY.CNCL,EVT.TIMEOUT,5000)
         end
         return itaxi_finish() 
     end

@@ -117,8 +117,6 @@ function prepare_txn_req()
 			EMV9f10 = "9F10"..string.format("%02X",#tagvalue/2)  .. tagvalue
 			tagvalue = get_value_from_tlvs("9F33")
 			if tagvalue == "" then tagvalue = "0008C8" end
-			if txn.cardname == "AMEX" then if txn.ctlsPin == "4" then tagvalue = "0008C8" else tagvalue="00E8C8" end end
-			if txn.cardname == "VISA" then if txn.ctlsPin == "4" then tagvalue = "0008C8" else tagvalue="0068C8" end end
 			EMV9f33 = "9F33"..string.format("%02X",#tagvalue/2) .. tagvalue
 			tagvalue = get_value_from_tlvs("9F1A")
 			EMV9f1a = "9F1A"..string.format("%02X",#tagvalue/2)  .. tagvalue

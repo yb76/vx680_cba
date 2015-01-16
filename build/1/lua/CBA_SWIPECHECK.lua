@@ -30,8 +30,9 @@ function swipecheck(track2,fallback)
   local cardname = terminal.TextTable("CARD_NAME",cardname_prefix)
 
   local chipflag = (panetc and string.sub(panetc,5,5) or "")
-  if not fallback and (chipflag == "2" or chipflag == "6") then
-    terminal.ErrorBeep(); return 0
+  if (chipflag == "2" or chipflag == "6") then
+    if not fallback then terminal.ErrorBeep() return 0
+	else return 2 end
   end
 
   return 1,cardname

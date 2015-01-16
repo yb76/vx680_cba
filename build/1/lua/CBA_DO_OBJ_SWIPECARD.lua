@@ -14,6 +14,8 @@ function do_obj_swipecard()
       screvents = EVT.TIMEOUT+EVT.SCT_IN
       txn.swipefirst = nil
       txn.track2 = nil	
+	elseif swipeflag == 1 and txn.chipcard and txn.emv.fallback then
+		txn.chipcard = nil; txn.emv.fallback = nil
 	elseif swipeflag > 0 then
 		txn.cardname = cardname
 	end

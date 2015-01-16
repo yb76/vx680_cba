@@ -142,9 +142,9 @@ data EST
 247,                            /* "CAPK Index 9" */
 "A000000004.F7",                /* "CAPK File 9" */
 "311240",                       /* "CAPK Expiry Date 9" */
-256,                            /* PublicKeyIndex10 */
-"",                             /* CAPKFile10 */
-"",                             /* CAPKExpDate10 */
+250,                            /* PublicKeyIndex10 */
+"A000000004.FA",                /* CAPKFile10 */
+"311240",                       /* CAPKExpDate10 */
 256,                            /* PublicKeyIndex11 */
 "",                             /* CAPKFile11 */
 "",                             /* CAPKExpDate11 */
@@ -340,9 +340,9 @@ data EST
 101,                            /* "CAPK Index 6" */
 "A000000025.65",                /* "CAPK File 6" */
 "311240",                       /* "CAPK Expiry Date 6" */
-256,                            /* "CAPK Index 7" */
-"",                             /* "CAPK File 7" */
-"",                             /* "CAPK Expiry Date 7" */
+103,                            /* "CAPK Index 7" */
+"A000000025.67",                /* "CAPK File 7" */
+"311240",                       /* "CAPK Expiry Date 7" */
 256,                            /* "CAPK Index 8" */
 "",                             /* "CAPK File 8" */
 "",                             /* "CAPK Expiry Date 8" */
