@@ -163,8 +163,8 @@ function init_config()
   config.efb,config.saf_limit,config.saf_limit_amt,config.stan,config.roc,config.logonstatus,config.tid,config.mid = terminal.GetJsonValue("CONFIG","EFB","SAF_LIMIT","SAF_LIMIT_AMT","STAN","ROC","LOGON_STATUS","TID","MID")
   if config.roc == "" then config.roc = "000000"; terminal.SetJsonValue("CONFIG","ROC", config.roc) end
   if config.stan == "" then config.stan= "000001"; terminal.SetJsonValue("CONFIG","STAN", config.stan) end
-  if config.saf_limit == "" then config.saf_limit = 10; terminal.SetJsonValue("CONFIG","SAF_LIMIT","10") else config.saf_limit = tonumber(config.saf_limit) end
-  if config.saf_limit_amt == "" then config.saf_limit_amt = 20000; terminal.SetJsonValue("CONFIG","SAF_LIMIT_AMT","20000") else config.saf_limit_amt = tonumber(config.saf_limit_amt) end
+  if config.saf_limit == "" then config.saf_limit = 10; terminal.SetJsonValue("CONFIG","SAF_LIMIT","5") else config.saf_limit = tonumber(config.saf_limit) end
+  if config.saf_limit_amt == "" then config.saf_limit_amt = 10000; terminal.SetJsonValue("CONFIG","SAF_LIMIT_AMT","10000") else config.saf_limit_amt = tonumber(config.saf_limit_amt) end
   if config.efb == "NO" then config.efb = nil else config.efb = true end 
   config.hip,config.port,config.apn,config.tcptimeout,config.aiic = terminal.GetJsonValue("CONFIG","HIP0","PORT0","APN","BANKTCPTIMEOUT","AIIC")
   config.timeadjust = terminal.GetJsonValue("iTAXI_CFG","RISTIMEOFFSET")
