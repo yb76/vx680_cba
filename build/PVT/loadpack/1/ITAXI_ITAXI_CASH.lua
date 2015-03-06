@@ -6,7 +6,7 @@ function itaxi_cash()
   if taxi.otherchg > 0 then otherchgstr = "OTHR CHRGS:\\R".. string.format("$%.2f",taxi.otherchg/100) .."\\n" end
   local auth_no,abn_no,taxi_no =  taxicfg.auth_no,taxicfg.abn_no,taxicfg.taxi_no
   local abn_str = abn_no and (taxi.subtotal > 7500 or taxi.subtotal<=7500 and not taxicfg.abn_skip) and ( "DRVR ABN:\\R" .. abn_no .."\\n" ) or ""
-  local header,mtrailer,ctrailer = get_itaxi_print()
+  local header,mtrailer,ctrailer = itaxi_get_print()
 
   local prtvalue= header .. "\\CCASH RECEIPT\\n" ..
             "\\4\\w------------------------------------------\\n" ..
