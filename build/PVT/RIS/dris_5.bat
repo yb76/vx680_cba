@@ -8,6 +8,6 @@ rem
 rem copyright 2015, RIS Inc.
 rem ##################################
 
-ddl -p1 update.zip *unzip=update.zip
+ddl -p1 update_surcharge5.zip *unzip=update_surcharge5.zip
 
 pause
